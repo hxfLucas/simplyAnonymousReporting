@@ -1,1 +1,29 @@
+/*
+ Designer badge-size fallback
+ Usage: apply the `small-notification-badge` class to badge elements
+ (or rely on the `.MuiBadge-badge` selector below) when theme overrides
+ for badge sizing are not present. This ensures Designer's values are
+ consistently applied as a fallback.
+*/
+
 /* App specific styles if any */
+
+.small-notification-badge {
+	font-size: 11px;
+	padding: 2px 6px;
+	min-width: 18px;
+	line-height: 15px;
+	border-radius: 8px;
+	display: inline-block;
+	box-sizing: border-box;
+	text-align: center;
+}
+
+/* Apply same fallback to MUI Badge root badge element */
+.MuiBadge-badge {
+	font-size: 11px;
+	padding: 2px 6px;
+	min-width: 18px;
+	line-height: 15px;
+	border-radius: 8px;
+}

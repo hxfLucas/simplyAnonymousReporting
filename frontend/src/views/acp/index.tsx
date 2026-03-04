@@ -95,12 +95,21 @@ export default function ACPLayout() {
               max={99}
               overlap="circular"
               anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-              sx={{
-                mr: 1,
-                '& .MuiBadge-badge': {
-                  transform: 'translate(-45%, 40%)',
-                },
+              onClick={() => {
+                if (!isReportsRoute) navigate('/acp/reports');
               }}
+              sx={(theme) => ({
+                mr: 1,
+                cursor: isReportsRoute ? 'default' : 'pointer',
+                '& .MuiBadge-badge': {
+                  transform: 'translate(-35%, 35%)',
+                  fontSize: theme.typography.pxToRem(9),
+                  height: 16,
+                  minWidth: 16,
+                  padding: '0 3px',
+                  borderRadius: 8,
+                },
+              })}
             >
               <IconButton
                 size="small"
