@@ -1,13 +1,17 @@
+import { AuthenticatedUser } from './../../shared/auth/authContext';
 import crypto from 'crypto';
 import  {getAppDataSource}  from '../../shared/database/data-source';
 import { User } from './users.entity';
+import { getAuthenticatedUserData } from '../../shared/auth/authContext';
 
 export type AdminContext = { id: string; role: string; companyId?: string };
 
 export async function createUserForCompany(
   admin: AdminContext,
-  payload: { email: string; name: string }
+  payload: { email: string; }
 ): Promise<User> {
+  const authenticatedRole = getAuthenticatedUserData().role;
+  
   if (admin.role !== 'admin') {
     const err: any = new Error('Forbidden');
     err.code = 'FORBIDDEN';
@@ -43,7 +47,6 @@ export async function createUserForCompany(
 
   const user = repo.create({
     companyId: admin.companyId,
-    name: payload.name,
     email: payload.email,
     passwordHash,
     role: 'manager',

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Paper,
@@ -9,11 +9,30 @@ import {
   Alert,
   Link as MuiLink,
 } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../hooks/modules/useAuth';
+import { checkSession } from '../../../api/auth.api';
+import { getRefreshToken } from '../../../api/axios';
+import { useAuthContext } from '../../../contexts/AuthContext';
 
 export default function SignInPage() {
   const { signIn, signInState } = useAuth();
+  const { setUser } = useAuthContext();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!getRefreshToken()) return;
+    checkSession()
+      .then((session) => {
+        if (session.valid) {
+          setUser(session.user);
+          navigate('/acp');
+        }
+      })
+      .catch(() => {
+        // ignore
+      });
+  }, [navigate, setUser]);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 

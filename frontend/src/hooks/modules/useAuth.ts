@@ -37,14 +37,16 @@ export function useAuth() {
     try {
       const { refresh_token } = await apiSignUp(payload);
       setRefreshToken(refresh_token);
-      navigate('/sign-in');
+      const session = await checkSession();
+      if (session.valid) setUser(session.user);
+      navigate('/acp');
     } catch (err: any) {
       const message = err?.response?.data?.error ?? err?.message ?? 'Sign up failed';
       setSignUpState({ isLoading: false, error: message });
     } finally {
       setSignUpState((prev) => ({ ...prev, isLoading: false }));
     }
-  }, [navigate]);
+  }, [navigate, setUser]);
 
   const signOut = useCallback(() => {
     contextSignOut();

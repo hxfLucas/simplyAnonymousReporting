@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { checkSession } from '../api/auth.api';
 import type { SessionUser } from '../api/auth.api';
-import { clearRefreshToken } from '../api/axios';
+import { clearRefreshToken, getRefreshToken } from '../api/axios';
 
 interface AuthContextValue {
   user: SessionUser | null;
@@ -17,6 +17,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (!getRefreshToken()) {
+      setIsLoading(false);
+      return;
+    }
     checkSession()
       .then((session) => {
         if (session.valid) setUser(session.user);

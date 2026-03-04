@@ -6,12 +6,11 @@ import { createUserForCompany, deleteUserFromCompany } from './users.service';
 export async function addUser(req: Request, res: Response) {
   const u = req.user!;
   const admin = { id: u.sub, role: u.role, companyId: (u as any).companyId };
-  const { email, name } = req.body ?? {};
+  const { email } = req.body ?? {};
 
   if (typeof email !== 'string' || !email) return res.status(400).json({ error: 'Invalid or missing email' });
-  if (typeof name !== 'string' || !name) return res.status(400).json({ error: 'Invalid or missing name' });
 
-  const created = await createUserForCompany(admin, { email, name });
+  const created = await createUserForCompany(admin, { email });
   const { password, ...safe } = (created as any);
   return res.status(201).json(safe);
 }
