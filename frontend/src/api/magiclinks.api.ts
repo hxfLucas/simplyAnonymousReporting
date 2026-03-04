@@ -5,6 +5,9 @@ export type MagicLink = {
   reportingToken: string;
   company: { id: string };
   createdAt: string;
+  alias: string | null;
+  createdById: string | null;
+  createdBy: { id: string; email: string } | null;
 };
 
 export async function listMagicLinks(): Promise<MagicLink[]> {
@@ -12,8 +15,8 @@ export async function listMagicLinks(): Promise<MagicLink[]> {
   return data;
 }
 
-export async function createMagicLink(): Promise<MagicLink> {
-  const { data } = await api.post<MagicLink>('/magiclinks/create-new-magiclink');
+export async function createMagicLink(alias?: string): Promise<MagicLink> {
+  const { data } = await api.post<MagicLink>('/magiclinks/create-new-magiclink', { alias });
   return data;
 }
 

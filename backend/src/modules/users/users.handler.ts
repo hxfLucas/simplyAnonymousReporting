@@ -61,6 +61,6 @@ export async function usersList(req: Request, res: Response) {
   const items = await qb.getMany();
 
   return res.json({
-    items: items.map((u) => ({ id: u.id, email: u.email, role: u.role, companyId: u.companyId })),
+    items: items.map((u) => ({ id: u.id, email: u.email, role: u.role, companyId: u.companyId, createdAt: u.createdAt })),
   });
 }

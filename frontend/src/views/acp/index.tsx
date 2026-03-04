@@ -10,8 +10,8 @@ import {
   Toolbar,
   Typography,
 } from '@mui/material';
-import { Assessment as AssessmentIcon, People as PeopleIcon, VpnKey as VpnKeyIcon, Notifications as NotificationsIcon } from '@mui/icons-material';
-import { IconButton } from '@mui/material';
+import { Assessment as AssessmentIcon, People as PeopleIcon, VpnKey as VpnKeyIcon, Summarize as SummarizeIcon } from '@mui/icons-material';
+import { Badge, IconButton } from '@mui/material';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { useAuth } from '../../hooks/modules/useAuth';
@@ -87,14 +87,11 @@ export default function ACPLayout() {
                 {user.email}
               </Typography>
             )}
-            <IconButton size="small" aria-label="Notifications" onClick={refresh} sx={{ mr: 1 }}>
-              <NotificationsIcon fontSize="small" />
-            </IconButton>
-            {unread > 0 && (
-              <Typography variant="body2" mr={2} color="text.secondary">
-                ({unread > 9 ? '9+' : unread})
-              </Typography>
-            )}
+            <Badge badgeContent={unread} color="error" max={99} sx={{ mr: 1 }}>
+              <IconButton size="small" aria-label="New Reports" onClick={refresh}>
+                <SummarizeIcon fontSize="small" />
+              </IconButton>
+            </Badge>
             <Button variant="outlined" size="small" onClick={signOut}>
               Sign Out
             </Button>

@@ -10,7 +10,7 @@ export function useNotifications(pollInterval = 30000) {
     try {
       const data = await getNotifications();
       if (!mountedRef.current) return;
-      setUnread(Number(data?.unread ?? 0));
+      setUnread(Number(data?.reportNotificationsData?.totalNew ?? 0));
     } catch (err) {
       // swallow — keep previous value
     }

@@ -5,39 +5,44 @@ import { generateMagicLinkData } from './magiclinks.utils'
 export async function listByCompany(companyId: string): Promise<MagicLink[]> {
   const repo = getAppDataSource().getRepository(MagicLink)
   const items = await repo.find({
-    where: { company: { id: companyId } as any },
+    where: { companyId },
+    relations: ['createdBy'],
     order: { createdAt: 'DESC' },
   })
   return items
 }
 
-export async function createMagicLink(companyId: string): Promise<MagicLink> {
+export async function createMagicLink(companyId: string, alias?: string | null, createdById?: string | null): Promise<MagicLink> {
   const repo = getAppDataSource().getRepository(MagicLink)
   const magicLinkData = await generateMagicLinkData()
 
   const entity = repo.create({
     reportingToken: magicLinkData.reportingToken,
     company: { id: companyId } as any,
+    alias: alias ?? null,
+    createdBy: createdById ? { id: createdById } as any : null,
   } as Partial<MagicLink>)
 
   const saved = await repo.save(entity)
   return saved
 }
 
-export async function deleteById(id: string, companyId?: string): Promise<void> {
+export async function deleteById(id: string, companyId: string, userId: string, role: string): Promise<void> {
   const repo = getAppDataSource().getRepository(MagicLink)
 
-  let link: MagicLink | null = null
-  if (companyId) {
-    link = await repo.findOne({ where: { id, company: { id: companyId } as any } })
-  } else {
-    link = await repo.findOneBy({ id } as any)
-  }
+  const link = await repo.findOne({ where: { id, companyId } })
 
   if (!link) {
     const err: any = new Error('Magic link not found')
     err.code = 'NOT_FOUND'
     err.status = 404
+    throw err
+  }
+
+  if (role !== 'admin' && link.createdById !== userId) {
+    const err: any = new Error('Forbidden')
+    err.status = 403
+    err.code = 'FORBIDDEN'
     throw err
   }
 

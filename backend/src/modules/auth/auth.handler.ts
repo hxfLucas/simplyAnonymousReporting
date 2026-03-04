@@ -2,8 +2,10 @@ import { Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { getAppDataSource } from '../../shared/database/data-source';
+import { getAuthenticatedUserData } from '../../shared/auth/authContext';
 import { User } from '../users/users.entity';
 import { Company } from '../companies/companies.entity';
+import { Report } from '../reports/reports.entity';
 
 type HttpError = Error & { status: number };
 
@@ -222,10 +224,7 @@ export async function checkSession(req: Request, res: Response): Promise<void> {
 }
 
 export async function getNotifications(req: Request, res: Response, next: NextFunction): Promise<void> {
-  const payload = req.user as JwtPayload | undefined;
-  if (!payload?.sub) {
-    throw createHttpError(401, 'unauthorized');
-  }
-
-  res.status(200).json({ unread: 0 });
+  const { companyId } = getAuthenticatedUserData();
+  const count = await getAppDataSource().getRepository(Report).count({ where: { companyId, status: 'new' } });
+  res.status(200).json({ reportNotificationsData: { totalNew: count } });
 }

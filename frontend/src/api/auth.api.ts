@@ -26,7 +26,7 @@ export async function checkSession(): Promise<SessionResponse> {
   return data;
 }
 
-export async function getNotifications(): Promise<{ unread: number }> {
-  const { data } = await api.get<{ unread: number }>('/auth/notifications');
+export async function getNotifications(): Promise<{ reportNotificationsData: { totalNew: number } }> {
+  const { data } = await api.get<{ reportNotificationsData: { totalNew: number } }>('/auth/notifications');
   return data;
 }

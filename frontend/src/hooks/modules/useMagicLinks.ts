@@ -31,10 +31,10 @@ export function useMagicLinks() {
     }
   }, []);
 
-  const generateMagicLink = useCallback(async () => {
+  const generateMagicLink = useCallback(async (alias?: string) => {
     setState((prev) => ({ ...prev, isLoading: true, error: null }));
     try {
-      const created = await apiCreateMagicLink();
+      const created = await apiCreateMagicLink(alias);
       setState((prev) => ({ ...prev, magicLinks: [...prev.magicLinks, created], isLoading: false }));
       return created;
     } catch (err: any) {

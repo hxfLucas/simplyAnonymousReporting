@@ -14,27 +14,28 @@ export async function listMagicLinks(req: Request, res: Response): Promise<void>
 }
 
 export async function createNewMagicLink(req: Request, res: Response): Promise<void> {
-  const companyId = getAuthenticatedUserData().companyId;
+  const { companyId, id: createdById } = getAuthenticatedUserData();
   if (!companyId) {
     res.status(400).json({ error: 'companyId is required' })
     return
   }
-  const created = await createMagicLink(companyId)
-  res.status(201).json({ id: created.id, reportingToken: created.reportingToken, createdAt: created.createdAt })
+  const { alias } = req.body as { alias?: string }
+  const created = await createMagicLink(companyId, alias, createdById)
+  res.status(201).json({ id: created.id, reportingToken: created.reportingToken, alias: created.alias, createdById: created.createdById, createdAt: created.createdAt, createdBy: created.createdBy })
 }
 
 export async function deleteMagicLink(req: Request, res: Response): Promise<void> {
-  const { id } = req.params as { id?: string }
-  if (!id) {
+  const { id: linkId } = req.params as { id?: string }
+  if (!linkId) {
     res.status(400).json({ error: 'id is required' })
     return
   }
-  const companyId = getAuthenticatedUserData().companyId
+  const { companyId, id, role } = getAuthenticatedUserData()
   if (!companyId) {
     res.status(400).json({ error: 'companyId is required' })
     return
   }
 
-  await deleteById(id, companyId)
+  await deleteById(linkId, companyId, id, role)
   res.status(204).send()
 }
