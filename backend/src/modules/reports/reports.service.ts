@@ -1,6 +1,7 @@
 import { getAppDataSource } from '../../shared/database/data-source';
 import { getAuthenticatedUserData } from '../../shared/auth/authContext';
 import { MagicLink } from '../magiclinks/magiclinks.entity';
+import { enqueueReportNotification } from '../notifications/notifications.service';
 import { Report, ReportStatus } from './reports.entity';
 import { ReportStatusHistory } from './report-status-history.entity';
 
@@ -53,7 +54,11 @@ export async function submitReport(payload: {
     status: 'new',
   });
 
-  return repo.save(report);
+  const saved = await repo.save(report);
+  enqueueReportNotification(companyId, saved.id).catch((err) =>
+    console.error('[notifications] Failed to enqueue report notification:', err)
+  );
+  return saved;
 }
 
 export async function listReports(offset: number = 0, limit: number = 25): Promise<{ data: Report[]; total: number; hasMore: boolean }> {

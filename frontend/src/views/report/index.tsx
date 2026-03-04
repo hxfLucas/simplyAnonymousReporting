@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import { validateReport, submitReport } from '../../api/reports.api';
 
-type PageState = 'loading' | 'invalid' | 'form' | 'submitted';
+type PageState = 'loading' | 'invalid' | 'form' | 'submitted' | 'rate-limited';
 
 export default function ReportPage() {
   const { reportTokenId } = useParams<{ reportTokenId: string }>();
@@ -47,9 +47,13 @@ export default function ReportPage() {
       await submitReport({ token: reportTokenId, title, description });
       setPageState('submitted');
     } catch (err: any) {
-      const message =
-        err?.response?.data?.error ?? err?.message ?? 'Failed to submit report. Please try again.';
-      setSubmitError(message);
+      if (err?.response?.status === 429) {
+        setPageState('rate-limited');
+      } else {
+        const message =
+          err?.response?.data?.error ?? err?.message ?? 'Failed to submit report. Please try again.';
+        setSubmitError(message);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -86,6 +90,20 @@ export default function ReportPage() {
         </Paper>
       )}
 
+      {pageState === 'rate-limited' && (
+        <Paper variant="outlined" sx={{ p: 4, textAlign: 'center' }}>
+          <Typography variant="h6" gutterBottom>
+            Slow down a little!
+          </Typography>
+          <Typography color="text.secondary" mb={3}>
+            Your report was <span style={{ color: 'red', fontWeight: 'bold' }}>rejected</span>. You've submitted a report very recently. Please wait a minute before trying again.
+          </Typography>
+          <Button variant="outlined" onClick={() => window.location.reload()}>
+            Reload page
+          </Button>
+        </Paper>
+      )}
+
       {pageState === 'form' && (
         <Paper variant="outlined" sx={{ p: 4 }}>
           <Typography variant="h5" fontWeight={600} gutterBottom>
@@ -103,7 +121,7 @@ export default function ReportPage() {
             </Alert>
           )}
 
-          <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Box component="form" onSubmit={handleSubmit} autoComplete="off" sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
               label="Title"
               value={title}
@@ -111,6 +129,7 @@ export default function ReportPage() {
               required
               fullWidth
               placeholder="Brief summary of the issue"
+              autoComplete="off"
             />
             <TextField
               label="Report Details"
@@ -121,6 +140,7 @@ export default function ReportPage() {
               multiline
               rows={6}
               placeholder="Describe the issue in detail..."
+              autoComplete="off"
             />
             <Button
               type="submit"

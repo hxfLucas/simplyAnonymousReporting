@@ -1,5 +1,8 @@
 # Copilot Instructions
 
+## NPM installs
+before NPM installing anything check your current folder, you might need to `cd` into either `frontend/` or `backend/` first, as they are separate apps with separate `package.json` files.
+
 ## Architecture Overview
 
 Monorepo with two independent apps — no shared packages:

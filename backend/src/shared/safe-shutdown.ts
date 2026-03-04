@@ -1,8 +1,9 @@
 import http from 'http';
 
-export default function attachProcessHandlers(server: http.Server){
+export default function attachProcessHandlers(server: http.Server, worker?: { close(): Promise<void> }) {
   const shutdown = (reason?: string) => {
     console.log('Shutting down server', reason || '');
+    if (worker) worker.close().catch(console.error);
     server.close(() => {
       console.log('Server closed');
       process.exit(0);

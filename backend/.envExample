@@ -12,3 +12,13 @@ PORT=3000
 JWT_SECRET=mySecret
 JWT_EXPIRATION=3600
 JWT_REFRESH_EXPIRATION=604800
+
+# SMTP email sending
+# Set ENABLE_SMTP_EMAILS=true to actually deliver emails
+ENABLE_SMTP_EMAILS=false
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your-smtp-username
+SMTP_PASS=your-smtp-password
+SMTP_FROM=noreply@yourapp.com

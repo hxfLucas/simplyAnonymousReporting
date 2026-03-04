@@ -1,13 +1,16 @@
 import { Router } from 'express';
 import ensureAdmin from '../../shared/middleware/ensureAdmin';
 import ensureManager from '../../shared/middleware/ensureManager';
+import { createRateLimiter } from '../../shared/middleware/rateLimiter';
 import { validateReportHandler, submitReportHandler, listReportsHandler, deleteReportHandler, updateReportStatusHandler } from './reports.handler';
 
 const router = Router();
 
+const submitReportLimiter = createRateLimiter({ windowMs: 60_000, max: 1 });
+
 // Public routes (no authentication)
 router.get('/validate-report', validateReportHandler);
-router.post('/submit-report', submitReportHandler);
+router.post('/submit-report', submitReportLimiter, submitReportHandler);
 
 // Manager-accessible routes
 router.get('/list', ensureManager, listReportsHandler);

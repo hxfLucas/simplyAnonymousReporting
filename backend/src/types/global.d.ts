@@ -8,6 +8,14 @@ declare global {
       CORS_ALLOWED_ORIGINS?: string;
       EMAIL_ENABLED?: string;
       JWT_SECRET?: string;
+      // SMTP email sending
+      ENABLE_SMTP_EMAILS?: string;
+      SMTP_HOST?: string;
+      SMTP_PORT?: string;
+      SMTP_SECURE?: string;
+      SMTP_USER?: string;
+      SMTP_PASS?: string;
+      SMTP_FROM?: string;
     }
   }
 }
