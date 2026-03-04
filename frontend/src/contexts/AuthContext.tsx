@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { checkSession, SessionUser } from '../api/auth.api';
+import { checkSession } from '../api/auth.api';
+import type { SessionUser } from '../api/auth.api';
 import { clearRefreshToken } from '../api/axios';
 
 interface AuthContextValue {

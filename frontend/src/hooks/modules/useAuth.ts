@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { signIn as apiSignIn, signUp as apiSignUp, checkSession, SignInPayload, SignUpPayload } from '../../api/auth.api';
+import { signIn as apiSignIn, signUp as apiSignUp, checkSession } from '../../api/auth.api';
+import type { SignInPayload, SignUpPayload } from '../../api/auth.api';
 import { setRefreshToken } from '../../api/axios';
 import { useAuthContext } from '../../contexts/AuthContext';
 

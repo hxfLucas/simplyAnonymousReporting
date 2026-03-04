@@ -13,10 +13,10 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import { useReports } from '../../../hooks/modules/useReports';
+import { useReports, STATUS_LABELS, STATUS_COLORS } from '../../../hooks/modules/useReports';
 
 export default function ReportsPage() {
-  const { reports, isLoading, error, fetchReports, STATUS_LABELS, STATUS_COLORS } = useReports();
+  const { reports, isLoading, error, fetchReports } = useReports();
 
   useEffect(() => {
     fetchReports();
@@ -66,15 +66,11 @@ export default function ReportsPage() {
                   <TableCell>
                     <Chip
                       label={STATUS_LABELS[report.status] ?? report.status}
+                      color={STATUS_COLORS[report.status] ?? 'default'}
                       size="small"
-                      sx={{
-                        bgcolor: STATUS_COLORS[report.status] ?? undefined,
-                        color: '#fff',
-                        fontWeight: 500,
-                      }}
                     />
                   </TableCell>
-                  <TableCell>{report.anonymous ? 'Yes' : 'No'}</TableCell>
+                  <TableCell>{report.isAnonymous ? 'Yes' : 'No'}</TableCell>
                   <TableCell>{report.reporterEmail ?? '—'}</TableCell>
                   <TableCell>
                     {report.createdAt

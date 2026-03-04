@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
-import { addUser as apiAddUser, removeUser as apiRemoveUser, User, AddUserPayload } from '../../api/users.api';
+import { addUser as apiAddUser, removeUser as apiRemoveUser } from '../../api/users.api';
+import type { User, AddUserPayload } from '../../api/users.api';
 
 interface UsersState {
   users: User[];
