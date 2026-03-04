@@ -6,6 +6,7 @@ import {
 } from '@mui/material';
 import { Delete as DeleteIcon, VpnKey as VpnKeyIcon, ContentCopy as ContentCopyIcon, Check as CheckIcon } from '@mui/icons-material';
 import { useMagicLinks } from '../../../hooks/modules/useMagicLinks';
+import { formatDate } from '../../../utils/formatDate';
 import { useAuthContext } from '../../../contexts/AuthContext';
 
 export default function MagicLinksPage() {
@@ -135,7 +136,7 @@ export default function MagicLinksPage() {
                         </Tooltip>
                       ) : '—'}
                     </TableCell>
-                    <TableCell>{new Date(link.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell>{formatDate(link.createdAt)}</TableCell>
                     <TableCell>
                       <Tooltip title={canDelete ? 'Delete' : 'You can only delete your own links'}>
                         <span>

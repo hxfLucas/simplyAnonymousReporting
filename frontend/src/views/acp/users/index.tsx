@@ -23,6 +23,7 @@ import {
 } from '@mui/material';
 import { Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon } from '@mui/icons-material';
 import { useUsers } from '../../../hooks/modules/useUsers';
+import { formatDate } from '../../../utils/formatDate';
 import { useAuthContext } from '../../../contexts/AuthContext';
 
 export default function UsersPage() {
@@ -145,9 +146,7 @@ export default function UsersPage() {
                     />
                   </TableCell>
                   <TableCell>
-                    {user.createdAt
-                      ? new Date(user.createdAt).toLocaleDateString()
-                      : '—'}
+                    {user.createdAt ? formatDate(user.createdAt) : '—'}
                   </TableCell>
                   <TableCell align="right">
                     <Tooltip

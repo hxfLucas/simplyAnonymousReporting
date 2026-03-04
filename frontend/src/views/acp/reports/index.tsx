@@ -28,25 +28,7 @@ import { useReports, STATUS_LABELS, STATUS_COLORS } from '../../../hooks/modules
 import type { ReportStatus } from '../../../api/reports.api';
 import type { Report } from '../../../api/reports.api';
 import { useAuthContext } from '../../../contexts/AuthContext';
-
-// Date formatter helper: e.g. "4th, March, 2026"
-function formatDateWithOrdinal(dateString: string): string {
-  if (!dateString) return '';
-  const d = new Date(dateString);
-  const day = d.getDate();
-  const getOrdinal = (n: number) => {
-    if (n > 3 && n < 21) return 'th';
-    switch (n % 10) {
-      case 1:  return 'st';
-      case 2:  return 'nd';
-      case 3:  return 'rd';
-      default: return 'th';
-    }
-  };
-  const month = d.toLocaleDateString(undefined, { month: 'long' });
-  const year = d.getFullYear();
-  return `${day}${getOrdinal(day)}, ${month} ${year}`;
-}
+import { formatDate } from '../../../utils/formatDate';
 
 export default function ReportsPage() {
   const { reports, isLoading, isLoadingMore, error, fetchInitial, loadMore, removeReport, changeReportStatus } = useReports();
@@ -136,7 +118,7 @@ export default function ReportsPage() {
                       size="small"
                     />
                   </TableCell>
-                  <TableCell>{formatDateWithOrdinal(report.createdAt)}</TableCell>
+                  <TableCell>{formatDate(report.createdAt)}</TableCell>
                   <TableCell align="right">
                     <Box display="flex" alignItems="center" justifyContent="flex-end" gap={1}>
                       <Select
@@ -225,7 +207,7 @@ export default function ReportsPage() {
               Date Created
             </Typography>
             <Typography variant="body2">
-              {viewReport ? formatDateWithOrdinal(viewReport.createdAt) : ''}
+              {viewReport ? formatDate(viewReport.createdAt) : ''}
             </Typography>
           </Box>
           <Box mt={3}>
