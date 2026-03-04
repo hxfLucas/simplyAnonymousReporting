@@ -18,13 +18,17 @@ import {
   TableHead,
   TableRow,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import { Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon } from '@mui/icons-material';
 import { useUsers } from '../../../hooks/modules/useUsers';
+import { useAuthContext } from '../../../contexts/AuthContext';
 
 export default function UsersPage() {
   const { users, isLoading, error, fetchUsers, addUser, removeUser, updateUserPassword } = useUsers();
+  const { user: currentUser } = useAuthContext();
+  const isManager = currentUser?.role === 'manager';
   const [dialogOpen, setDialogOpen] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -129,23 +133,38 @@ export default function UsersPage() {
                       : '—'}
                   </TableCell>
                   <TableCell align="right">
-                    <IconButton
-                      size="small"
-                      color="default"
-                      onClick={() => handleOpenEditDialog(user.id)}
-                      aria-label="edit user password"
+                    <Tooltip
+                      title={isManager ? 'Insufficient permissions, contact the administrator' : ''}
+                      disableHoverListener={!isManager}
                     >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      color={user.role === 'admin' ? 'default' : 'error'}
-                      onClick={user.role === 'admin' ? undefined : () => removeUser(user.id)}
-                      aria-label="delete user"
-                      disabled={user.role === 'admin'}
+                      <span>
+                        <IconButton
+                          size="small"
+                          color="default"
+                          onClick={() => handleOpenEditDialog(user.id)}
+                          aria-label="edit user password"
+                          disabled={isManager}
+                        >
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                    <Tooltip
+                      title={isManager || user.role === 'admin' ? 'Insufficient permissions, contact the administrator' : ''}
+                      disableHoverListener={!isManager && user.role !== 'admin'}
                     >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
+                      <span>
+                        <IconButton
+                          size="small"
+                          color={isManager || user.role === 'admin' ? 'default' : 'error'}
+                          onClick={isManager || user.role === 'admin' ? undefined : () => removeUser(user.id)}
+                          aria-label="delete user"
+                          disabled={isManager || user.role === 'admin'}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
                   </TableCell>
                 </TableRow>
               ))

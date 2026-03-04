@@ -3,7 +3,7 @@ import api from './axios';
 export type SignInPayload = { email: string; password: string };
 export type SignUpPayload = { email: string; password: string; company: string };
 export type AuthResponse = { refresh_token: string };
-export type SessionUser = { id: string; email: string };
+export type SessionUser = { id: string; email: string; role: string; companyId?: string };
 export type SessionResponse = { valid: boolean; user: SessionUser };
 
 export async function signIn(payload: SignInPayload): Promise<AuthResponse> {

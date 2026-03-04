@@ -86,10 +86,19 @@ function generateTokenPair(userId: string, role: string, companyId:string): { ac
   if(!role){
     throw createHttpError(500, 'User role is missing');
   }
+
+  const expirationSecondsAt = process.env.JWT_EXPIRATION ? parseInt(process.env.JWT_EXPIRATION) : 15 * 60;
+  const expirationSecondsRt = process.env.JWT_REFRESH_EXPIRATION ? parseInt(process.env.JWT_REFRESH_EXPIRATION) : 7 * 24 * 60 * 60;
+  if(!expirationSecondsAt) {
+    throw createHttpError(500, 'JWT_EXPIRATION is not configured');
+  }
+  if(!expirationSecondsRt) {
+    throw createHttpError(500, 'JWT_REFRESH_EXPIRATION is not configured');
+  }
   const access_token = jwt.sign(
     { sub: userId, role:role, companyId:companyId },
     accessSecret,
-    { algorithm: 'HS256', expiresIn: '15m' }
+    { algorithm: 'HS256', expiresIn: `${expirationSecondsAt}s` }
   );
 
   const atHash = md5Hash(access_token);
@@ -97,18 +106,22 @@ function generateTokenPair(userId: string, role: string, companyId:string): { ac
   const refresh_token = jwt.sign(
     { sub: userId, atHash },
     refreshSecret,
-    { algorithm: 'HS256', expiresIn: '7d' }
+    { algorithm: 'HS256', expiresIn: `${expirationSecondsRt}s` }
   );
 
   return { access_token, refresh_token };
 }
 
 function setAccessTokenCookie(res: Response, accessToken: string): void {
+  const expirationSecondsAt = process.env.JWT_EXPIRATION ? parseInt(process.env.JWT_EXPIRATION) : 0;
+  if(!expirationSecondsAt){
+    throw createHttpError(500, 'JWT_EXPIRATION is not configured');
+  }
   res.cookie('access_token', accessToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
-    maxAge: 15 * 60 * 1000,
+    maxAge: expirationSecondsAt * 1000,
   });
 }
 
