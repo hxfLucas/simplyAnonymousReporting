@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { getAppDataSource } from '../../shared/database/data-source';
-import { AuthUser } from './user.entity';
+import { User } from '../users/users.entity';
 
 type HttpError = Error & { status: number };
 
@@ -114,7 +114,7 @@ export async function signUp(req: Request, res: Response, next: NextFunction): P
       return;
     }
 
-    const repository = getAppDataSource().getRepository(AuthUser);
+    const repository = getAppDataSource().getRepository(User);
     const existingUser = await repository.findOneBy({ email });
     if (existingUser) {
       next(createHttpError(409, 'email already registered'));
@@ -141,7 +141,7 @@ export async function signIn(req: Request, res: Response, next: NextFunction): P
       return;
     }
 
-    const repository = getAppDataSource().getRepository(AuthUser);
+    const repository = getAppDataSource().getRepository(User);
     const user = await repository.findOneBy({ email });
     if (!user) {
       next(createHttpError(401, 'invalid credentials'));
