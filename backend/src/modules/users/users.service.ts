@@ -58,7 +58,7 @@ export async function deleteUserFromCompany(id: string): Promise<void> {
   }
 
   const repo = getAppDataSource().getRepository(User);
-  const user = await repo.findOneBy({ id });
+  const user = await repo.findOneBy({ id, companyId: authData.companyId });
   if (!user) {
     const err: any = new Error('User not found');
     err.code = 'NOT_FOUND';

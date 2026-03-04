@@ -110,9 +110,10 @@ export default function UsersPage() {
                   <TableCell align="right">
                     <IconButton
                       size="small"
-                      color="error"
-                      onClick={() => removeUser(user.id)}
+                      color={user.role === 'admin' ? 'default' : 'error'}
+                      onClick={user.role === 'admin' ? undefined : () => removeUser(user.id)}
                       aria-label="delete user"
+                      disabled={user.role === 'admin'}
                     >
                       <DeleteIcon fontSize="small" />
                     </IconButton>
