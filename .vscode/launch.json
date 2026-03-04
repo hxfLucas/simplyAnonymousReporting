@@ -2,6 +2,43 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Start Nodemon (watch)",
+      "type": "pwa-node",
+      "request": "launch",
+      "runtimeExecutable": "${workspaceFolder}/backend/node_modules/.bin/nodemon",
+      "runtimeArgs": [
+        "--watch",
+        "src",
+        "--ext",
+        "ts",
+        "--exec",
+        "npm run build && node --inspect=9229 dist/index.js"
+      ],
+      "cwd": "${workspaceFolder}/backend",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    },
+    {
+      "name": "Attach to Node",
+      "type": "pwa-node",
+      "request": "attach",
+      "port": 9229,
+      "restart": true,
+      "localRoot": "${workspaceFolder}/backend",
+      "remoteRoot": "${workspaceFolder}/backend"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Debug Backend (Watch)",
+      "configurations": ["Start Nodemon (watch)", "Attach to Node"]
+    }
+  ]
+}
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
       "name": "Debug Backend (ts-node)",
       "type": "node",
       "request": "launch",

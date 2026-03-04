@@ -156,7 +156,7 @@ export async function signIn(req: Request, res: Response): Promise<void> {
     throw createHttpError(401, 'invalid credentials');
   }
 
-  const { access_token, refresh_token } = generateTokenPair(user.id, user.role, user.company.id);
+  const { access_token, refresh_token } = generateTokenPair(user.id, user.role, user.companyId);
   setAccessTokenCookie(res, access_token);
   res.status(200).json({ refresh_token });
 }

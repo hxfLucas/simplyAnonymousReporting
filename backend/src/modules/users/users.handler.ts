@@ -9,7 +9,7 @@ export async function addUser(req: Request<{}, {}, { email: string }>, res: Resp
 
   const { email } = req.body ?? {};
 
-  if (typeof email !== 'string' || !email || !isValidEmail(email)) return res.status(400).json({ error: 'Invalid or missing email' });
+  if (!isValidEmail(email)) return res.status(400).json({ error: 'Invalid or missing email' });
 
   const created = await createUserForCompany({ email });
   const { password, ...safe } = (created as any);

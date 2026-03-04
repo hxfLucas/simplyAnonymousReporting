@@ -36,8 +36,9 @@ export async function createUserForCompany(
     });
   });
 
+  const companyId = getAuthenticatedUserData().companyId;
   const user = repo.create({
-    companyId: getAuthenticatedUserData().companyId,
+    company:{ id: companyId },
     email: payload.email,
     passwordHash,
     role: 'manager',

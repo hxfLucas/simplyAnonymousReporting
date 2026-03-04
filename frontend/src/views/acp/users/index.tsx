@@ -72,7 +72,6 @@ export default function UsersPage() {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Name</TableCell>
               <TableCell>Email</TableCell>
               <TableCell>Role</TableCell>
               <TableCell>Joined</TableCell>
@@ -91,7 +90,6 @@ export default function UsersPage() {
             ) : (
               users.map((user) => (
                 <TableRow key={user.id} hover>
-                  <TableCell>{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
                     <Chip
