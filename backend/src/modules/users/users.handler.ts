@@ -1,14 +1,13 @@
 import { Request, Response } from 'express';
 import { getAppDataSource } from '../../shared/database/data-source';
+import { isValidEmail } from '../../shared/utils/validateEmail';
+import { AddUserDto } from './users.dtos';
 import { User } from './users.entity';
 import { createUserForCompany, deleteUserFromCompany } from './users.service';
-import { getAuthenticatedUserData } from '../../shared/auth/authContext';
-import { isValidEmail } from '../../shared/utils/validateEmail';
-import { AddUserDto, RemoveUserDto } from './users.dtos';
 
-export async function addUser(req: Request, res: Response) {
+export async function addUser(req: Request<{}, {}, AddUserDto>, res: Response) {
 
-  const { email: rawEmail } = (req.body as AddUserDto) ?? {};
+  const { email: rawEmail } = req.body ?? {};
   const email = String(rawEmail ?? '').trim().toLowerCase();
 
   if (!isValidEmail(email)) return res.status(400).json({ error: 'Invalid or missing email' });
@@ -18,9 +17,8 @@ export async function addUser(req: Request, res: Response) {
   return res.status(201).json(safe);
 }
 
-export async function removeUser(req: Request, res: Response) {
-  const params = req.params as Partial<RemoveUserDto> & { id?: string };
-  const id: string = String(params.id ?? '');
+export async function removeUser(req: Request<{ id: string }>, res: Response) {
+  const id: string = req.params?.id;
   if (!id) return res.status(400).json({ error: 'Missing user id' });
 
   await deleteUserFromCompany(id);
