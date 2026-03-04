@@ -11,12 +11,14 @@ export async function createUserForCompany(
   if (admin.role !== 'admin') {
     const err: any = new Error('Forbidden');
     err.code = 'FORBIDDEN';
+    err.status = 403;
     throw err;
   }
 
   if (!admin.companyId) {
     const err: any = new Error('Missing company');
     err.code = 'FORBIDDEN';
+    err.status = 403;
     throw err;
   }
 
@@ -25,6 +27,7 @@ export async function createUserForCompany(
   if (existing) {
     const err: any = new Error('Email already in use');
     err.code = 'DUPLICATE_EMAIL';
+    err.status = 409;
     throw err;
   }
 
@@ -54,6 +57,7 @@ export async function deleteUserFromCompany(admin: AdminContext, id: string): Pr
   if (admin.role !== 'admin') {
     const err: any = new Error('Forbidden');
     err.code = 'FORBIDDEN';
+    err.status = 403;
     throw err;
   }
 
@@ -62,18 +66,21 @@ export async function deleteUserFromCompany(admin: AdminContext, id: string): Pr
   if (!user) {
     const err: any = new Error('User not found');
     err.code = 'NOT_FOUND';
+    err.status = 404;
     throw err;
   }
 
   if (user.companyId !== admin.companyId) {
     const err: any = new Error('Cannot operate on users from other companies');
     err.code = 'FORBIDDEN';
+    err.status = 403;
     throw err;
   }
 
   if (user.role === 'admin') {
     const err: any = new Error('Cannot delete admin users');
     err.code = 'CANNOT_DELETE_ADMIN';
+    err.status = 403;
     throw err;
   }
 

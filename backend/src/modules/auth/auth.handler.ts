@@ -1,8 +1,9 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import crypto from 'crypto';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { getAppDataSource } from '../../shared/database/data-source';
 import { User } from '../users/users.entity';
+import { Company } from '../companies/companies.entity';
 
 type HttpError = Error & { status: number };
 
@@ -106,114 +107,92 @@ function setAccessTokenCookie(res: Response, accessToken: string): void {
   });
 }
 
-export async function signUp(req: Request, res: Response, next: NextFunction): Promise<void> {
-  try {
-    const { email, password } = req.body ?? {};
-    if (!email || !password) {
-      next(createHttpError(400, 'email and password are required'));
-      return;
-    }
-
-    const repository = getAppDataSource().getRepository(User);
-    const existingUser = await repository.findOneBy({ email });
-    if (existingUser) {
-      next(createHttpError(409, 'email already registered'));
-      return;
-    }
-
-    const passwordHash = await hashPassword(password);
-    const user = repository.create({ email, passwordHash, role: 'admin' });
-    await repository.save(user);
-
-    const { access_token, refresh_token } = generateTokenPair(user.id, user.email);
-    setAccessTokenCookie(res, access_token);
-    res.status(201).json({ refresh_token });
-  } catch (error) {
-    next(error);
+export async function signUp(req: Request, res: Response): Promise<void> {
+  const { email, password, company } = req.body ?? {};
+  if (!email || !password) {
+    throw createHttpError(400, 'email and password are required');
   }
+
+  const repository = getAppDataSource().getRepository(User);
+  const existingUser = await repository.findOneBy({ email });
+  if (existingUser) {
+    throw createHttpError(409, 'email already registered');
+  }
+
+  const repositoryCompany = getAppDataSource().getRepository(Company);
+  const newCompany = repositoryCompany.create({ name: company });
+  const savedCompany = await repositoryCompany.save(newCompany);
+
+  const passwordHash = await hashPassword(password);
+  const user = repository.create({ email, passwordHash, role: 'admin', company: savedCompany });
+  await repository.save(user);
+
+  const { access_token, refresh_token } = generateTokenPair(user.id, user.email);
+  setAccessTokenCookie(res, access_token);
+  res.status(201).json({ refresh_token });
 }
 
-export async function signIn(req: Request, res: Response, next: NextFunction): Promise<void> {
-  try {
-    const { email, password } = req.body ?? {};
-    if (!email || !password) {
-      next(createHttpError(400, 'email and password are required'));
-      return;
-    }
-
-    const repository = getAppDataSource().getRepository(User);
-    const user = await repository.findOneBy({ email });
-    if (!user) {
-      next(createHttpError(401, 'invalid credentials'));
-      return;
-    }
-
-    const isValidPassword = await verifyPassword(password, user.passwordHash);
-    if (!isValidPassword) {
-      next(createHttpError(401, 'invalid credentials'));
-      return;
-    }
-
-    const { access_token, refresh_token } = generateTokenPair(user.id, user.email);
-    setAccessTokenCookie(res, access_token);
-    res.status(200).json({ refresh_token });
-  } catch (error) {
-    next(error);
+export async function signIn(req: Request, res: Response): Promise<void> {
+  const { email, password } = req.body ?? {};
+  if (!email || !password) {
+    throw createHttpError(400, 'email and password are required');
   }
+
+  const repository = getAppDataSource().getRepository(User);
+  const user = await repository.findOneBy({ email });
+  if (!user) {
+    throw createHttpError(401, 'invalid credentials');
+  }
+
+  const isValidPassword = await verifyPassword(password, user.passwordHash);
+  if (!isValidPassword) {
+    throw createHttpError(401, 'invalid credentials');
+  }
+
+  const { access_token, refresh_token } = generateTokenPair(user.id, user.email);
+  setAccessTokenCookie(res, access_token);
+  res.status(200).json({ refresh_token });
 }
 
-export async function refreshTokens(req: Request, res: Response, next: NextFunction): Promise<void> {
-  try {
-    const { refresh_token } = req.body ?? {};
-    if (!refresh_token) {
-      next(createHttpError(400, 'refresh_token is required'));
-      return;
-    }
-
-    const accessToken = req.cookies?.access_token as string | undefined;
-    if (!accessToken) {
-      next(createHttpError(401, 'access_token cookie is required'));
-      return;
-    }
-
-    let payload: RefreshTokenPayload;
-    try {
-      payload = jwt.verify(refresh_token, getRefreshSecret(), { algorithms: ['HS256'] }) as RefreshTokenPayload;
-    } catch {
-      next(createHttpError(401, 'invalid or expired refresh_token'));
-      return;
-    }
-
-    const accessTokenHash = md5Hash(accessToken);
-    if (accessTokenHash !== payload.atHash) {
-      next(createHttpError(401, 'token pair mismatch'));
-      return;
-    }
-
-    const { access_token, refresh_token: newRefreshToken } = generateTokenPair(payload.sub, payload.email);
-    setAccessTokenCookie(res, access_token);
-    res.status(200).json({ refresh_token: newRefreshToken });
-  } catch (error) {
-    next(error);
+export async function refreshTokens(req: Request, res: Response): Promise<void> {
+  const { refresh_token } = req.body ?? {};
+  if (!refresh_token) {
+    throw createHttpError(400, 'refresh_token is required');
   }
+
+  const accessToken = req.cookies?.access_token as string | undefined;
+  if (!accessToken) {
+    throw createHttpError(401, 'access_token cookie is required');
+  }
+
+  let payload: RefreshTokenPayload;
+  try {
+    payload = jwt.verify(refresh_token, getRefreshSecret(), { algorithms: ['HS256'] }) as RefreshTokenPayload;
+  } catch {
+    throw createHttpError(401, 'invalid or expired refresh_token');
+  }
+
+  const accessTokenHash = md5Hash(accessToken);
+  if (accessTokenHash !== payload.atHash) {
+    throw createHttpError(401, 'token pair mismatch');
+  }
+
+  const { access_token, refresh_token: newRefreshToken } = generateTokenPair(payload.sub, payload.email);
+  setAccessTokenCookie(res, access_token);
+  res.status(200).json({ refresh_token: newRefreshToken });
 }
 
-export async function checkSession(req: Request, res: Response, next: NextFunction): Promise<void> {
-  try {
-    const payload = req.user as JwtPayload | undefined;
-    if (!payload?.sub) {
-      next(createHttpError(401, 'unauthorized'));
-      return;
-    }
-
-    res.status(200).json({
-      valid: true,
-      user: {
-        id: payload.sub,
-        email: payload.email,
-      },
-    });
-  } catch (error) {
-    next(error);
+export async function checkSession(req: Request, res: Response): Promise<void> {
+  const payload = req.user as JwtPayload | undefined;
+  if (!payload?.sub) {
+    throw createHttpError(401, 'unauthorized');
   }
+
+  res.status(200).json({
+    valid: true,
+    user: {
+      id: payload.sub,
+      email: payload.email,
+    },
+  });
 }

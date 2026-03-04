@@ -44,7 +44,7 @@ export default function ACPLayout() {
       >
         <Box px={2} py={2.5}>
           <Typography variant="h6" color="primary" fontWeight={700}>
-            bridgeIn
+            EthicReport
           </Typography>
         </Box>
 
@@ -76,7 +76,7 @@ export default function ACPLayout() {
         >
           <Toolbar>
             <Typography variant="subtitle1" fontWeight={600} flexGrow={1}>
-              bridgeIn ACP
+              EthicReport ACP
             </Typography>
             {user?.email && (
               <Typography variant="body2" mr={2} color="text.secondary">

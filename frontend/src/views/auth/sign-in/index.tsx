@@ -45,7 +45,7 @@ export default function SignInPage() {
       >
         <Box>
           <Typography variant="h5" fontWeight={600} gutterBottom>
-            Sign in to bridgeIn
+            Sign in to EthicReport
           </Typography>
           <Typography variant="body2" color="text.secondary">
             Enter your credentials to continue

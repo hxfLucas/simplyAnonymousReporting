@@ -15,6 +15,7 @@ import { useAuth } from '../../../hooks/modules/useAuth';
 export default function SignUpPage() {
   const { signUp, signUpState } = useAuth();
   const [email, setEmail] = useState('');
+  const [company, setCompany] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
@@ -26,7 +27,7 @@ export default function SignUpPage() {
       return;
     }
     setLocalError(null);
-    signUp({ email, password });
+    signUp({ email, password, company });
   };
 
   const displayError = localError ?? signUpState.error;
@@ -57,11 +58,20 @@ export default function SignUpPage() {
             Create your account
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Join bridgeIn today
+            Join EthicReport today
           </Typography>
         </Box>
 
         <Box component="form" onSubmit={handleSubmit} display="flex" flexDirection="column" gap={2} mt={1}>
+          <TextField
+            label="Company"
+            type="text"
+            value={company}
+            onChange={(e) => setCompany(e.target.value)}
+            autoFocus
+            required
+            fullWidth
+          />
           <TextField
             label="Email"
             type="email"

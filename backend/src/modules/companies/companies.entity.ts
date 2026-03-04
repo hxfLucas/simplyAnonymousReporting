@@ -10,8 +10,6 @@ export class Company {
   @Column({ type: 'varchar', nullable: false })
   name!: string;
 
-  
-
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt!: Date;
 
