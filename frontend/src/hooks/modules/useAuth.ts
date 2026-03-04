@@ -22,7 +22,10 @@ export function useAuth() {
       const { refresh_token } = await apiSignIn(payload);
       setRefreshToken(refresh_token);
       const session = await checkSession();
-      if (session.valid) setUser(session.user);
+      if (session.valid) {
+        setUser(session.user);
+        setRefreshToken(session.refresh_token);
+      }
       navigate('/acp');
     } catch (err: any) {
       const message = err?.response?.data?.error ?? err?.message ?? 'Sign in failed';
@@ -38,7 +41,10 @@ export function useAuth() {
       const { refresh_token } = await apiSignUp(payload);
       setRefreshToken(refresh_token);
       const session = await checkSession();
-      if (session.valid) setUser(session.user);
+      if (session.valid) {
+        setUser(session.user);
+        setRefreshToken(session.refresh_token);
+      }
       navigate('/acp');
     } catch (err: any) {
       const message = err?.response?.data?.error ?? err?.message ?? 'Sign up failed';

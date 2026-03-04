@@ -22,7 +22,11 @@ api.interceptors.response.use(
   async (error) => {
     const originalConfig = error.config;
 
-    if (error.response?.status === 401 && !(error as any).config._retry) {
+    if (
+      error.response?.status === 401 &&
+      error.response?.data?.message === 'invalid_token' &&
+      !(error as any).config._retry
+    ) {
       const refreshToken = getRefreshToken();
 
       if (!refreshToken) {

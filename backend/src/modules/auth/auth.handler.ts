@@ -212,8 +212,16 @@ export async function checkSession(req: Request, res: Response): Promise<void> {
     throw createHttpError(401, 'unauthorized');
   }
 
+  const { access_token, refresh_token } = generateTokenPair(
+    payload.sub,
+    payload.role,
+    payload.companyId
+  );
+  setAccessTokenCookie(res, access_token);
+
   res.status(200).json({
     valid: true,
+    refresh_token,
     user: {
       id: payload.sub,
       email: payload.email,

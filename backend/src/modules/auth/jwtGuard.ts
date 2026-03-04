@@ -27,6 +27,6 @@ export function jwtGuard(req: Request, res: Response, next: NextFunction): void 
     req.user = payload;
     runWithAuthUser({ id: payload.sub, role: payload.role, companyId: payload.companyId }, next);
   } catch {
-    res.status(401).json({ error: 'unauthorized' });
+    res.status(401).json({ message: 'invalid_token' });
   }
 }
