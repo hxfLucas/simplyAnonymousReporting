@@ -10,11 +10,7 @@ export class Company {
   @Column({ type: 'varchar', nullable: false })
   name!: string;
 
-  @Column({ type: 'varchar', unique: true, nullable: false })
-  slug!: string;
-
-  @Column({ name: 'reporting_token', type: 'varchar', unique: true, nullable: false })
-  reportingToken!: string;
+  
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt!: Date;

@@ -5,6 +5,7 @@ import { getAppDataSource, setAppDataSource } from './shared/database/data-sourc
 import errorHandler from './shared/middleware/errorHandler';
 import authRouter from './modules/auth/auth.routes';
 import usersRouter from './modules/users/users.routes';
+import magiclinksRouter from './modules/magiclinks/magiclinks.routes';
 
 import { requestContextMiddleware } from './shared/auth/requestContext';
 
@@ -26,6 +27,7 @@ export async function createApp(dataSource?: any){
 
         app.use('/auth', authRouter);
         app.use('/users', usersRouter);
+        app.use('/magiclinks', magiclinksRouter);
 
         app.use(errorHandler);
         return app;

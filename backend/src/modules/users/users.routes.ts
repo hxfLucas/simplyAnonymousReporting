@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import ensureAdmin from '../../shared/middleware/ensureAdmin';
 import { createUserForCompany, deleteUserFromCompany } from './users.service';
+import { usersList } from './users.list.handler';
 
 const router = Router();
 
@@ -49,5 +50,7 @@ router.delete('/remove-user/:id', ensureAdmin, async (req: Request<{ id: string 
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+router.get('/list', ensureAdmin, usersList);
 
 export default router;
