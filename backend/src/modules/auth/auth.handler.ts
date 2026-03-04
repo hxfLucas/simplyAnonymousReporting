@@ -22,17 +22,17 @@ function md5Hash(value: string): string {
 }
 
 function getAccessSecret(): string {
-  if (!process.env.JWT_ACCESS_SECRET) {
-    throw createHttpError(500, 'JWT_ACCESS_SECRET is not configured');
+  if (!process.env.JWT_SECRET) {
+    throw createHttpError(500, 'JWT_SECRET is not configured');
   }
-  return process.env.JWT_ACCESS_SECRET;
+  return process.env.JWT_SECRET;
 }
 
 function getRefreshSecret(): string {
-  if (!process.env.JWT_REFRESH_SECRET) {
-    throw createHttpError(500, 'JWT_REFRESH_SECRET is not configured');
+  if (!process.env.JWT_SECRET) {
+    throw createHttpError(500, 'JWT_SECRET is not configured');
   }
-  return process.env.JWT_REFRESH_SECRET;
+  return process.env.JWT_SECRET;
 }
 
 function hashPassword(password: string): Promise<string> {

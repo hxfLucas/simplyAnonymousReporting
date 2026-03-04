@@ -20,6 +20,7 @@
       "request": "launch",
       "cwd": "${workspaceFolder}/backend",
       "program": "${workspaceFolder}/backend/dist/index.js",
+      "preLaunchTask": "npm: build",
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "outFiles": ["${workspaceFolder}/backend/dist/**/*.js"],

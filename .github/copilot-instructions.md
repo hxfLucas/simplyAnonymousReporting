@@ -68,7 +68,7 @@ All HTTP calls go through the Axios instance in `src/api/axios.ts` (`withCredent
 | Frontend production build | `npm run build` |
 
 ### Required environment variables (backend)
-`POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `CORS_ALLOWED_ORIGINS`, `PORT` (default `3000`)
+`POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `JWT_SECRET`, `CORS_ALLOWED_ORIGINS`, `PORT` (default `3000`)
 
 ### Required environment variables (frontend)
 `VITE_API_URL` (default `http://localhost:3000`)

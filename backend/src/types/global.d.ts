@@ -7,8 +7,7 @@ declare global {
       MONGO_URI?: string;
       CORS_ALLOWED_ORIGINS?: string;
       EMAIL_ENABLED?: string;
-      JWT_ACCESS_SECRET?: string;
-      JWT_REFRESH_SECRET?: string;
+      JWT_SECRET?: string;
     }
   }
 }
