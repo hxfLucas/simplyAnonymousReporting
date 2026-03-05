@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getNotifications } from '../../api/auth.api';
+import { useVisibilityChange } from '../useVisibilityChange';
 
 // Internal refresh hook target. Other internal modules may import
 // `refreshInternal` to trigger a refetch without calling the hook's
@@ -26,27 +27,21 @@ export function useNotifications(pollInterval = 15000) {
   }, []);
 
   const refresh = useCallback(() => {
-    void fetch();
+    fetch();
   }, [fetch]);
+
+  useVisibilityChange(fetch);
 
   useEffect(() => {
     mountedRef.current = true;
     // register this hook instance as the module-level internal refresher
     _internalRefresh = refresh;
     // initial fetch
-    void fetch();
-
-    const onVisibility = () => {
-      if (document.visibilityState === 'visible') {
-        void fetch();
-      }
-    };
-
-    document.addEventListener('visibilitychange', onVisibility);
+    fetch();
 
     if (pollInterval > 0) {
       timerRef.current = window.setInterval(() => {
-        void fetch();
+        fetch();
       }, pollInterval);
     }
 
@@ -54,7 +49,6 @@ export function useNotifications(pollInterval = 15000) {
       mountedRef.current = false;
       // only clear if it still points to this instance's refresh
       if (_internalRefresh === refresh) _internalRefresh = null;
-      document.removeEventListener('visibilitychange', onVisibility);
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [fetch, pollInterval]);
