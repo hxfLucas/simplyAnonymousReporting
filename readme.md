@@ -307,7 +307,7 @@ Token invalidation uses a **dual-layer approach** for performance:
 
 When a user triggers "Sign Out All Devices", the current timestamp is recorded. Any JWT with an `iat` (issued-at) before that timestamp is rejected by `jwtGuard`.
 
-**Memory footprint:** The in-memory map stores `UUIDv4 (16 bytes) → timestamp (8 bytes) = 24 bytes` per entry. For **1 million users**, this consumes approximately **~24 MB** of memory — a negligible cost for eliminating Redis round-trips on every authenticated request.
+**Memory footprint:** The in-memory map stores `UUIDv4 (16 bytes) → timestamp (8 bytes) = 24 bytes` per entry. For **1 million users**, this consumes approximately **~24 MB** of memory — a negligible cost for eliminating Redis round-trips on every authenticated request. (Only relevant if the Redis node is placed in another machine / datacenter)
 
 ---
 
