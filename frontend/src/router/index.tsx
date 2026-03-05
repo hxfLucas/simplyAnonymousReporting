@@ -36,7 +36,7 @@ const router = createBrowserRouter([
         children: [
           {
             index: true,
-            element: <Navigate to="/acp/reports" replace />,
+            element: <Navigate to="/acp/dashboard" replace />,
           },
           {
             path: 'reports',
