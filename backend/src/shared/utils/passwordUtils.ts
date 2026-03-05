@@ -51,8 +51,12 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
       if (error) {
         reject(error);
       } else {
-        const match = derivedKey.toString('hex') === key;
-        resolve(match);
+        const expected = Buffer.from(key, 'hex');
+        if (derivedKey.length !== expected.length) {
+          resolve(false);
+          return;
+        }
+        resolve(crypto.timingSafeEqual(derivedKey, expected));
       }
     });
   });

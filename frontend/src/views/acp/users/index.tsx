@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Box,
@@ -41,11 +41,18 @@ export default function UsersPage() {
   const [editPassword, setEditPassword] = useState('');
 
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
 
-  // Search hook with 250ms debounce delay
-  const { searchValue, setSearchValue } = useSearch('', 250, (query) => {
-    fetchUsers(query);
-  });
+  // Debounced search callback — empty string resets to the unfiltered list
+  const handleSearch = useCallback((query: string) => {
+    if (query) {
+      fetchUsers(query);
+    } else {
+      fetchInitial();
+    }
+  }, [fetchUsers, fetchInitial]);
+
+  const { searchValue, setSearchValue } = useSearch('', 250, handleSearch);
 
   useEffect(() => {
     fetchInitial();
@@ -54,7 +61,7 @@ export default function UsersPage() {
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el) return;
-    const observer = new IntersectionObserver(
+    observerRef.current = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
           loadMore();
@@ -62,9 +69,9 @@ export default function UsersPage() {
       },
       { threshold: 0.1 }
     );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [loadMore]);
+    observerRef.current.observe(el);
+    return () => observerRef.current?.disconnect();
+  }, []);
 
   const handleOpenDialog = () => {
     setName('');

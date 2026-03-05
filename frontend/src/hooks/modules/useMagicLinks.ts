@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   listMagicLinks as apiListMagicLinks,
   createMagicLink as apiCreateMagicLink,
@@ -39,40 +39,60 @@ export function useMagicLinks() {
   const offsetRef = useRef(0);
   const hasMoreRef = useRef(false);
   const isLoadingMoreRef = useRef(false);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const fetchInitial = useCallback(async () => {
     offsetRef.current = 0;
     isLoadingMoreRef.current = false;
-    setState((prev) => ({ ...prev, magicLinks: [], total: 0, hasMore: false, isLoading: true, error: null }));
+    if (isMountedRef.current) {
+      setState((prev) => ({ ...prev, magicLinks: [], total: 0, hasMore: false, isLoading: true, error: null }));
+    }
     try {
       const res = await apiListMagicLinks(0, LIMIT);
       offsetRef.current = res.data.length;
       hasMoreRef.current = res.hasMore;
-      setState({ magicLinks: res.data, total: res.total, hasMore: res.hasMore, isLoading: false, isLoadingMore: false, error: null });
+      if (isMountedRef.current) {
+        setState({ magicLinks: res.data, total: res.total, hasMore: res.hasMore, isLoading: false, isLoadingMore: false, error: null });
+      }
     } catch (err: any) {
       const message = err?.response?.data?.error ?? err?.message ?? 'Failed to fetch magic links';
-      setState((prev) => ({ ...prev, isLoading: false, error: message }));
+      if (isMountedRef.current) {
+        setState((prev) => ({ ...prev, isLoading: false, error: message }));
+      }
     }
   }, []);
 
   const loadMore = useCallback(async () => {
     if (isLoadingMoreRef.current || !hasMoreRef.current) return;
     isLoadingMoreRef.current = true;
-    setState((prev) => ({ ...prev, isLoadingMore: true }));
+    if (isMountedRef.current) {
+      setState((prev) => ({ ...prev, isLoadingMore: true }));
+    }
     try {
       const res = await apiListMagicLinks(offsetRef.current, LIMIT);
       offsetRef.current += res.data.length;
       hasMoreRef.current = res.hasMore;
-      setState((prev) => ({
-        ...prev,
-        magicLinks: [...prev.magicLinks, ...res.data],
-        total: res.total,
-        hasMore: res.hasMore,
-        isLoadingMore: false,
-      }));
+      if (isMountedRef.current) {
+        setState((prev) => ({
+          ...prev,
+          magicLinks: [...prev.magicLinks, ...res.data],
+          total: res.total,
+          hasMore: res.hasMore,
+          isLoadingMore: false,
+        }));
+      }
     } catch (err: any) {
       const message = err?.response?.data?.error ?? err?.message ?? 'Failed to load more';
-      setState((prev) => ({ ...prev, isLoadingMore: false, error: message }));
+      if (isMountedRef.current) {
+        setState((prev) => ({ ...prev, isLoadingMore: false, error: message }));
+      }
     } finally {
       isLoadingMoreRef.current = false;
     }
@@ -82,12 +102,16 @@ export function useMagicLinks() {
     setGenerateLinkState({ isLoading: true, error: null });
     try {
       const created = await apiCreateMagicLink(alias);
-      setState((prev) => ({ ...prev, magicLinks: [...prev.magicLinks, created] }));
-      setGenerateLinkState({ isLoading: false, error: null });
+      if (isMountedRef.current) {
+        setState((prev) => ({ ...prev, magicLinks: [created, ...prev.magicLinks] }));
+        setGenerateLinkState({ isLoading: false, error: null });
+      }
       return created;
     } catch (err: any) {
       const message = err?.response?.data?.error ?? err?.message ?? 'Failed to create magic link';
-      setGenerateLinkState({ isLoading: false, error: message });
+      if (isMountedRef.current) {
+        setGenerateLinkState({ isLoading: false, error: message });
+      }
       throw err;
     }
   }, []);
@@ -96,14 +120,18 @@ export function useMagicLinks() {
     setRemoveLinkState({ isLoading: true, error: null });
     try {
       await apiDeleteMagicLink(id);
-      setState((prev) => ({
-        ...prev,
-        magicLinks: prev.magicLinks.filter((ml) => ml.id !== id),
-      }));
-      setRemoveLinkState({ isLoading: false, error: null });
+      if (isMountedRef.current) {
+        setState((prev) => ({
+          ...prev,
+          magicLinks: prev.magicLinks.filter((ml) => ml.id !== id),
+        }));
+        setRemoveLinkState({ isLoading: false, error: null });
+      }
     } catch (err: any) {
       const message = err?.response?.data?.error ?? err?.message ?? 'Failed to delete magic link';
-      setRemoveLinkState({ isLoading: false, error: message });
+      if (isMountedRef.current) {
+        setRemoveLinkState({ isLoading: false, error: message });
+      }
       throw err;
     }
   }, []);

@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsIn, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class AddUserDto {
   @IsEmail()
@@ -17,4 +17,34 @@ export class UpdateUserPasswordDto {
   @IsString()
   @MinLength(6)
   password!: string;
+}
+
+export class UpdateOwnSettingsDto {
+  @IsString()
+  @IsIn(['change_password', 'sign_out_all_devices'])
+  action!: 'change_password' | 'sign_out_all_devices';
+
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  currentPassword?: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(6)
+  newPassword?: string;
+}
+
+export interface UserResponse {
+  id: string;
+  email: string;
+  role: string;
+  companyId: string;
+  createdAt: Date;
+}
+
+export interface ListUsersResponse {
+  data: UserResponse[];
+  total: number;
+  hasMore: boolean;
 }

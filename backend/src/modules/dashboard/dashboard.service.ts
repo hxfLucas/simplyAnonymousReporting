@@ -3,15 +3,9 @@ import { getAuthenticatedUserData } from '../../shared/auth/authContext';
 import { User } from '../users/users.entity';
 import { Report } from '../reports/reports.entity';
 import { MagicLink } from '../magiclinks/magiclinks.entity';
+import type { DashboardStats } from './dashboard.dtos';
 
-export interface DashboardStats {
-  totalCountUsers: number;
-  totalCountReportsNew: number;
-  totalCountReportsInReview: number;
-  totalCountReportsResolved: number;
-  totalCountReportsRejected: number;
-  totalMagicLinksGenerated: number;
-}
+export type { DashboardStats };
 
 export async function getDashboardStats(): Promise<DashboardStats> {
   const { companyId } = getAuthenticatedUserData();

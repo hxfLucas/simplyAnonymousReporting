@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
 import jwt, { JwtPayload } from 'jsonwebtoken';
+import { hashPassword, verifyPassword } from '../../shared/utils/passwordUtils';
 import { getAppDataSource } from '../../shared/database/data-source';
 import { getAuthenticatedUserData } from '../../shared/auth/authContext';
 import { User } from '../users/users.entity';
@@ -35,48 +36,6 @@ function getRefreshSecret(): string {
     throw createHttpError(500, 'JWT_REFRESH_SECRET is not configured', 'INTERNAL_ERROR');
   }
   return process.env.JWT_REFRESH_SECRET;
-}
-
-function hashPassword(password: string): Promise<string> {
-  const salt = crypto.randomBytes(16).toString('hex');
-  return new Promise((resolve, reject) => {
-    crypto.scrypt(password, salt, 64, (error, derivedKey) => {
-      if (error) {
-        reject(error);
-        return;
-      }
-      resolve(`${salt}:${derivedKey.toString('hex')}`);
-    });
-  });
-}
-
-function verifyPassword(password: string, storedHash: string): Promise<boolean> {
-  const parts = storedHash.split(':');
-  if (parts.length !== 2) {
-    return Promise.resolve(false);
-  }
-
-  const [salt, expectedHash] = parts;
-  return new Promise((resolve, reject) => {
-    crypto.scrypt(password, salt, 64, (error, derivedKey) => {
-      if (error) {
-        reject(error);
-        return;
-      }
-
-      try {
-        const expectedBuffer = Buffer.from(expectedHash, 'hex');
-        const derivedBuffer = Buffer.from(derivedKey.toString('hex'), 'hex');
-        if (expectedBuffer.length !== derivedBuffer.length) {
-          resolve(false);
-          return;
-        }
-        resolve(crypto.timingSafeEqual(derivedBuffer, expectedBuffer));
-      } catch {
-        resolve(false);
-      }
-    });
-  });
 }
 
 function generateTokenPair(userId: string, role: string, companyId:string): { access_token: string; refresh_token: string } {

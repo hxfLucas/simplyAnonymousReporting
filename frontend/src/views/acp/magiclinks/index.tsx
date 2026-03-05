@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useCallback, useState, useEffect, useRef } from 'react';
 import {
   Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle,
   IconButton, LinearProgress, Paper, Snackbar, Table, TableBody,
@@ -19,6 +19,7 @@ export default function MagicLinksPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
   const aliasRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -28,7 +29,7 @@ export default function MagicLinksPage() {
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el) return;
-    const observer = new IntersectionObserver(
+    observerRef.current = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
           loadMore();
@@ -36,9 +37,9 @@ export default function MagicLinksPage() {
       },
       { threshold: 0.1 }
     );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [loadMore]);
+    observerRef.current.observe(el);
+    return () => observerRef.current?.disconnect();
+  }, []);
 
   const handleConfirmGenerate = async () => {
     await generateMagicLink(aliasInput || undefined);

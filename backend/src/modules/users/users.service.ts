@@ -1,8 +1,9 @@
-import crypto from 'crypto';
 import  {getAppDataSource}  from '../../shared/database/data-source';
+import { hashPassword, verifyPassword } from '../../shared/utils/passwordUtils';
 import { User } from './users.entity';
 import { getAuthenticatedUserData } from '../../shared/auth/authContext';
 import { invalidateUser } from '../../shared/auth/tokenInvalidation';
+import { ListUsersResponse } from './users.dtos';
 
 export type AdminContext = { id: string; role: string; companyId?: string };
 
@@ -27,14 +28,7 @@ export async function createUserForCompany(
     throw err;
   }
 
-  // hash the provided password
-  const salt = crypto.randomBytes(16).toString('hex');
-  const passwordHash = await new Promise<string>((resolve, reject) => {
-    crypto.scrypt(payload.password, salt, 64, (error, derivedKey) => {
-      if (error) return reject(error);
-      resolve(`${salt}:${derivedKey.toString('hex')}`);
-    });
-  });
+  const passwordHash = await hashPassword(payload.password);
 
   const companyId = authData.companyId;
   const user = repo.create({
@@ -95,13 +89,7 @@ export async function updateUserPassword(payload: { id: string; password: string
     throw err;
   }
 
-  const salt = crypto.randomBytes(16).toString('hex');
-  const passwordHash = await new Promise<string>((resolve, reject) => {
-    crypto.scrypt(payload.password, salt, 64, (error, derivedKey) => {
-      if (error) return reject(error);
-      resolve(`${salt}:${derivedKey.toString('hex')}`);
-    });
-  });
+  const passwordHash = await hashPassword(payload.password);
 
   user.passwordHash = passwordHash;
   await repo.save(user);
@@ -112,7 +100,7 @@ export async function listUsers(params: {
   offset: number;
   limit: number;
   search?: string;
-}): Promise<{ data: Array<{ id: string; email: string; role: string; companyId: string; createdAt: Date }>; total: number; hasMore: boolean }> {
+}): Promise<ListUsersResponse> {
   const repo = getAppDataSource().getRepository(User);
   const qb = repo.createQueryBuilder('user').where('user.companyId = :companyId', { companyId: params.companyId });
 
@@ -154,13 +142,7 @@ export async function updateOwnSettings(payload: UpdateOwnSettingsPayload): Prom
     throw err;
   }
 
-  const [salt, storedKey] = user.passwordHash.split(':');
-  const isValid = await new Promise<boolean>((resolve, reject) => {
-    crypto.scrypt(payload.currentPassword, salt, 64, (error, derivedKey) => {
-      if (error) return reject(error);
-      resolve(derivedKey.toString('hex') === storedKey);
-    });
-  });
+  const isValid = await verifyPassword(payload.currentPassword, user.passwordHash);
 
   if (!isValid) {
     const err: any = new Error('Current password is incorrect');
@@ -169,13 +151,7 @@ export async function updateOwnSettings(payload: UpdateOwnSettingsPayload): Prom
     throw err;
   }
 
-  const newSalt = crypto.randomBytes(16).toString('hex');
-  const newPasswordHash = await new Promise<string>((resolve, reject) => {
-    crypto.scrypt(payload.newPassword, newSalt, 64, (error, derivedKey) => {
-      if (error) return reject(error);
-      resolve(`${newSalt}:${derivedKey.toString('hex')}`);
-    });
-  });
+  const newPasswordHash = await hashPassword(payload.newPassword);
 
   user.passwordHash = newPasswordHash;
   await repo.save(user);
