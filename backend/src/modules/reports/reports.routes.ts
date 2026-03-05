@@ -6,7 +6,7 @@ import { validateReportHandler, submitReportHandler, listReportsHandler, deleteR
 
 const router = Router();
 
-const submitReportLimiter = createRateLimiter({ windowMs: 60_000, max: 1 });
+const submitReportLimiter = createRateLimiter({ windowMs: 60000, max: 1 });
 
 // Public routes (no authentication)
 router.get('/validate-report', validateReportHandler);
