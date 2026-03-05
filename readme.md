@@ -149,7 +149,7 @@ bridgeInChallenge/
 └── readme.md
 ```
 
-The backend and frontend are **independent applications** with separate `package.json` files — there are no shared packages.
+The backend and frontend are **independent applications** with separate `package.json` files — there are no shared packages. They were included in the same repository to facilitate the evaluation of the challenge. (In a real scenario they would be separated into different repositories to facilitate/simplify CI/CD pipes)
 
 ### Domain Model
 
