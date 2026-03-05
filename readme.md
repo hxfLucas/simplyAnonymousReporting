@@ -90,9 +90,9 @@ frontend/src/
 ├── components/     # Reusable UI components
 ├── contexts/       # React contexts (AuthContext)
 ├── hooks/          # Custom hooks (useLocalStorage, useIsReportsRoute)
-│   └── modules/    # Feature hooks (useAuth, useNotifications)
+│   └── modules/    # Feature hooks (useAuth, useDashboard, useMagicLinks, useNotifications, useReports, useSearch, useSettings, useUsers)
 ├── router/         # React Router config + PrivateRoute guard
-├── utils/          # Utility functions (formatDate)
+├── utils/          # Utility functions (formatDate, extractErrorMessage)
 └── views/
     ├── acp/        # Admin Control Panel (reports, users, magic links, dashboard, settings)
     ├── auth/       # Sign-in / Sign-up pages
@@ -224,20 +224,23 @@ Tests are split by convention:
 
 The test `DataSource` is injected into `createApp(dataSource)`, fully isolating tests from the real database.
 
-**148 tests across 12 suites — all passing**
+**185 tests across 19 suites — all passing**
 
 | Module | Statements | Branches | Functions | Lines |
 |---|---|---|---|---|
-| **All files** | **74.24%** | **48.18%** | **72.13%** | **75.30%** |
-| auth | 56.41% | 18.18% | 50.00% | 58.82% |
-| magiclinks | 79.78% | 60.00% | 70.00% | 80.68% |
-| notifications | 57.14% | 33.33% | 60.00% | 57.14% |
-| reports | 80.40% | 44.18% | 66.66% | 81.75% |
-| users | 59.47% | 23.68% | 52.38% | 62.14% |
-| shared/auth | 58.33% | 60.00% | 66.66% | 61.76% |
+| **All files** | **82.41%** | **54.91%** | **80.50%** | **83.00%** |
+| auth | 89.47% | 64.51% | 92.30% | 89.47% |
+| companies | 100% | 100% | 100% | 100% |
+| dashboard | 56.00% | 100% | 0% | 56.00% |
+| magiclinks | 72.82% | 46.15% | 66.66% | 72.22% |
+| notifications | 100% | 100% | 100% | 100% |
+| reports | 81.64% | 44.18% | 66.66% | 82.99% |
+| users | 64.48% | 23.52% | 53.84% | 66.09% |
+| shared/auth | 100% | 100% | 100% | 100% |
+| shared/database | 100% | 100% | 100% | 100% |
 | shared/errors | 100% | 100% | 100% | 100% |
-| shared/middleware | 42.30% | 30.00% | 44.44% | 42.22% |
-| shared/utils | 93.33% | 91.66% | 100% | 93.10% |
+| shared/middleware | 96.87% | 90.62% | 100% | 100% |
+| shared/utils | 87.87% | 88.46% | 100% | 87.50% |
 
 ```bash
 cd backend
@@ -249,19 +252,28 @@ npm test -- --coverage    # With coverage report
 
 ### Frontend Tests (Vitest + Testing Library)
 
-All frontend tests are **unit tests** (`*.unit.test.ts` / `*.unit.test.tsx`), using `@testing-library/react` for component tests and `axios-mock-adapter` for API mocking.
+Frontend tests include **unit tests** (`*.unit.test.ts` / `*.unit.test.tsx`) for hooks, utilities, and contexts, plus **component tests** (`*.test.tsx`) for view pages, using `@testing-library/react` for rendering and `axios-mock-adapter` for API mocking.
 
-**70 tests across 8 suites — all passing**
+**109 tests across 17 suites — all passing**
 
 | Module | Statements | Branches | Functions | Lines |
 |---|---|---|---|---|
-| **All files** | **96.22%** | **89.06%** | **94.44%** | **95.97%** |
-| api (axios) | 100% | 100% | 100% | 100% |
+| **All files** | **72.66%** | **69.79%** | **56.84%** | **73.06%** |
+| api | 35.18% | 52.94% | 19.23% | 35.18% |
+| components | 100% | 60.00% | 100% | 100% |
 | contexts (AuthContext) | 91.89% | 85.71% | 81.81% | 91.17% |
 | hooks | 89.47% | 100% | 100% | 89.47% |
-| hooks/modules | 100% | 80.95% | 100% | 100% |
+| hooks/modules | 100% | 86.66% | 100% | 100% |
 | router (PrivateRoute) | 100% | 100% | 100% | 100% |
-| utils (formatDate) | 94.11% | 91.66% | 100% | 92.85% |
+| utils | 94.73% | 93.75% | 100% | 93.75% |
+| views/acp/dashboard | 100% | 100% | 100% | 100% |
+| views/acp/magiclinks | 60.86% | 55.55% | 36.84% | 65.85% |
+| views/acp/reports | 57.89% | 50.00% | 37.50% | 60.00% |
+| views/acp/settings | 28.00% | 55.00% | 20.00% | 28.00% |
+| views/acp/users | 68.85% | 75.00% | 45.00% | 69.49% |
+| views/auth/sign-in | 77.77% | 50.00% | 71.42% | 76.47% |
+| views/auth/sign-up | 100% | 87.50% | 100% | 100% |
+| views/report | 78.12% | 72.72% | 87.50% | 80.64% |
 
 ```bash
 cd frontend
@@ -347,7 +359,7 @@ SMTP_FROM=noreply@yourapp.com
 
 | Variable | Default | Description |
 |---|---|---|
-| `NODE_ENV` | `dev` | `production` or `production` — controls cookie `secure` flag and error verbosity |
+| `NODE_ENV` | `dev` | `dev` or `production` — controls cookie `secure` flag and error verbosity |
 | `POSTGRES_HOST` | `localhost` | PostgreSQL hostname |
 | `POSTGRES_PORT` | `5432` | PostgreSQL port |
 | `POSTGRES_USER` | — | PostgreSQL username |
