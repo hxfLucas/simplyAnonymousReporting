@@ -7,6 +7,9 @@ import { getAuthenticatedUserData } from '../../shared/auth/authContext';
 import { User } from '../users/users.entity';
 import { Company } from '../companies/companies.entity';
 import { getNewReportCount } from '../notifications/notifications.service';
+import { SignUpDto, SignInDto, RefreshTokensDto, AuthTokenResponseDto, CheckSessionResponseDto } from './auth.dtos';
+import { NotificationsResponseDto } from '../notifications/notifications.dtos';
+import { ErrorResponseDto } from '../../shared/errors/errorResponse.dto';
 
 type HttpError = Error & { status: number; code: string };
 
@@ -86,7 +89,7 @@ function setAccessTokenCookie(res: Response, accessToken: string): void {
   });
 }
 
-export async function signUp(req: Request, res: Response): Promise<void> {
+export async function signUp(req: Request<{}, AuthTokenResponseDto, SignUpDto>, res: Response<AuthTokenResponseDto | ErrorResponseDto>): Promise<void> {
   const { email: rawEmail, password, company } = req.body ?? {};
   const email = String(rawEmail ?? '').trim().toLowerCase();
   if (!email || !password) {
@@ -114,7 +117,7 @@ export async function signUp(req: Request, res: Response): Promise<void> {
   res.status(201).json({ refresh_token });
 }
 
-export async function signIn(req: Request, res: Response): Promise<void> {
+export async function signIn(req: Request<{}, AuthTokenResponseDto, SignInDto>, res: Response<AuthTokenResponseDto | ErrorResponseDto>): Promise<void> {
   const { email: rawEmail, password } = req.body ?? {};
   const email = String(rawEmail ?? '').trim().toLowerCase();
   if (!email || !password) {
@@ -137,7 +140,7 @@ export async function signIn(req: Request, res: Response): Promise<void> {
   res.status(200).json({ refresh_token });
 }
 
-export async function refreshTokens(req: Request, res: Response): Promise<void> {
+export async function refreshTokens(req: Request<{}, AuthTokenResponseDto, RefreshTokensDto>, res: Response<AuthTokenResponseDto | ErrorResponseDto>): Promise<void> {
   const { refresh_token } = req.body ?? {};
   if (!refresh_token) {
     throw createHttpError(400, 'refresh_token is required', 'BAD_REQUEST');
@@ -171,7 +174,7 @@ export async function refreshTokens(req: Request, res: Response): Promise<void> 
   res.status(200).json({ refresh_token: newRefreshToken });
 }
 
-export async function checkSession(req: Request, res: Response): Promise<void> {
+export async function checkSession(req: Request, res: Response<CheckSessionResponseDto | ErrorResponseDto>): Promise<void> {
   const authData = getAuthenticatedUserData();
 
   const sessionUserRepository = getAppDataSource().getRepository(User);
@@ -203,7 +206,7 @@ export async function checkSession(req: Request, res: Response): Promise<void> {
   });
 }
 
-export async function getNotifications(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function getNotifications(req: Request, res: Response<NotificationsResponseDto | ErrorResponseDto>, next: NextFunction): Promise<void> {
   const { companyId } = getAuthenticatedUserData();
   const count = await getNewReportCount(companyId);
   res.status(200).json({ reportNotificationsData: { totalNew: count } });

@@ -1,10 +1,11 @@
 import { Request, Response } from 'express';
 import { isValidEmail } from '../../shared/utils/validateEmail';
-import { AddUserDto } from './users.dtos';
+import { AddUserDto, UpdateUserPasswordDto, UpdateOwnSettingsDto, UserResponseDto, ListUsersResponseDto } from './users.dtos';
+import { ErrorResponseDto } from '../../shared/errors/errorResponse.dto';
 import { createUserForCompany, deleteUserFromCompany, updateUserPassword as updateUserPasswordService, listUsers, updateOwnSettings } from './users.service';
 import { getAuthenticatedUserData } from '../../shared/auth/authContext';
 
-export async function addUser(req: Request<{}, {}, AddUserDto>, res: Response) {
+export async function addUser(req: Request<{}, UserResponseDto, AddUserDto>, res: Response<UserResponseDto | ErrorResponseDto>) {
 
   const { email: rawEmail, password: rawPassword } = req.body ?? {};
   const email = String(rawEmail ?? '').trim().toLowerCase();
@@ -18,7 +19,7 @@ export async function addUser(req: Request<{}, {}, AddUserDto>, res: Response) {
   return res.status(201).json(safe);
 }
 
-export async function updateUserPassword(req: Request, res: Response) {
+export async function updateUserPassword(req: Request<{}, {}, UpdateUserPasswordDto>, res: Response<ErrorResponseDto>) {
   const { id, password: rawPassword } = req.body ?? {};
   const password = String(rawPassword ?? '').trim();
 
@@ -29,7 +30,7 @@ export async function updateUserPassword(req: Request, res: Response) {
   return res.sendStatus(204);
 }
 
-export async function removeUser(req: Request<{ id: string }>, res: Response) {
+export async function removeUser(req: Request<{ id: string }>, res: Response<ErrorResponseDto>) {
   const id: string = req.params?.id;
   if (!id) return res.status(400).json({ error: 'Missing user id' });
 
@@ -38,7 +39,7 @@ export async function removeUser(req: Request<{ id: string }>, res: Response) {
   return res.status(204).send();
 }
 
-export async function usersList(req: Request, res: Response) {
+export async function usersList(req: Request, res: Response<ListUsersResponseDto | ErrorResponseDto>) {
   const limit = Math.min(Number(req.query.limit) || 25, 100);
   const offset = Math.max(Number(req.query.offset) || 0, 0);
   const { search } = req.query;
@@ -50,7 +51,7 @@ export async function usersList(req: Request, res: Response) {
   return res.json(result);
 }
 
-export async function updateOwnSettingsHandler(req: Request, res: Response, next: Function) {
+export async function updateOwnSettingsHandler(req: Request<{}, { ok: boolean }, UpdateOwnSettingsDto>, res: Response<{ ok: boolean } | ErrorResponseDto>, next: Function) {
   try {
     const { action, currentPassword, newPassword } = req.body ?? {};
     if (!action) return res.status(400).json({ error: 'Missing action' });
