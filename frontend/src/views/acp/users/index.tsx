@@ -43,14 +43,12 @@ export default function UsersPage() {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
 
-  // Debounced search callback — empty string resets to the unfiltered list
+  // Debounced search callback — empty string resets to the unfiltered list.
+  // Always calls fetchUsers directly (never fetchInitial) so that searchQueryRef
+  // inside useUsers is properly reset to '' when clearing the input.
   const handleSearch = useCallback((query: string) => {
-    if (query) {
-      fetchUsers(query);
-    } else {
-      fetchInitial();
-    }
-  }, [fetchUsers, fetchInitial]);
+    fetchUsers(query);
+  }, [fetchUsers]);
 
   const { searchValue, setSearchValue } = useSearch('', 250, handleSearch);
 
