@@ -53,15 +53,15 @@ graph TB
     end
 
     subgraph "Network"
-        API["REST API<br/>(Axios + JWT)"]
         MagicLink["Magic Link<br/>(reportingToken)"]
+        API["REST API<br/>(Axios + JWT)"]
     end
 
     subgraph "Backend (Express + TypeScript)"
         Auth["🔐 Auth Module<br/>(Login/Signup/Refresh)"]
         Users["👥 Users Module<br/>(CRUD + Roles)"]
         Companies["🏢 Companies Module<br/>(Tenant Mgmt)"]
-        MagicLinks["✨ Magic Links Module<br/>(Token Generation)"]
+        MagicLinks["✨ Magic Links Module<br/>(Link Token Generation)"]
         Reports["📋 Reports Module<br/>(CRUD + Status)"]
         Dashboard["📊 Dashboard Module<br/>(Analytics)"]
         Notifications["🔔 Notifications Module<br/>(Real-time)"]
