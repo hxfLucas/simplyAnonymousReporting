@@ -86,7 +86,7 @@ graph TB
 
     %% Frontend to Backend
     UI -->|REST API Calls| API
-    API -->|HTTP + JWT<br/>in httpOnly Cookie| Auth & Users & Companies & MagicLinks & Reports & Dashboard & Notifications
+    API -->|Authenticated User<br/>HTTP + JWT| Auth & Users & Companies & MagicLinks & Reports & Dashboard & Notifications
 
     %% Magic Link flow (public)
     MagicLink -->|Anonymous Report<br/>Submission| Reports
