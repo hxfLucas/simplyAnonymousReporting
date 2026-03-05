@@ -43,3 +43,10 @@ Create a postgres database locally and replace the details from the  .envExample
 | `REDIS_PORT` | `6379` | Redis port |
 | `REDIS_PASSWORD` | _(empty)_ | Redis AUTH password (optional) |
 npm install npm run dev
+
+
+frontend tests:
+npm test
+
+backend tests:
+npm run test
