@@ -1,17 +1,27 @@
+import { useState } from 'react';
 import {
   AppBar,
+  Avatar,
+  Badge,
   Box,
   Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   Drawer,
+  IconButton,
   List,
   ListItemButton,
   ListItemIcon,
   ListItemText,
+  Menu,
+  MenuItem,
   Toolbar,
   Typography,
 } from '@mui/material';
-import { Assessment as AssessmentIcon, People as PeopleIcon, VpnKey as VpnKeyIcon, Summarize as SummarizeIcon, Dashboard as DashboardIcon, Settings as SettingsIcon } from '@mui/icons-material';
-import { Badge, IconButton } from '@mui/material';
+import { Assessment as AssessmentIcon, People as PeopleIcon, VpnKey as VpnKeyIcon, Summarize as SummarizeIcon, Dashboard as DashboardIcon } from '@mui/icons-material';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { useAuth } from '../../hooks/modules/useAuth';
@@ -28,13 +38,14 @@ export default function ACPLayout() {
   const { unread } = useNotifications();
   const isReportsRoute = useIsReportsRoute();
   console.log("Unread content: ", unread);
+  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
+  const [signOutDialogOpen, setSignOutDialogOpen] = useState(false);
 
   const navItems = [
     { label: 'Dashboard', path: '/acp/dashboard', icon: <DashboardIcon /> },
     { label: 'Reports', path: '/acp/reports', icon: <AssessmentIcon /> },
     { label: 'Users', path: '/acp/users', icon: <PeopleIcon /> },
     { label: 'Magic Links', path: '/acp/magiclinks', icon: <VpnKeyIcon /> },
-    { label: 'Settings', path: '/acp/settings', icon: <SettingsIcon /> },
   ];
 
   return (
@@ -87,11 +98,6 @@ export default function ACPLayout() {
             <Typography variant="subtitle1" fontWeight={600} flexGrow={1}>
               EthicReport ACP
             </Typography>
-            {user?.email && (
-              <Typography variant="body2" mr={2} color="text.secondary">
-                {user.email}
-              </Typography>
-            )}
             <Badge
               badgeContent={unread}
               invisible={unread === 0}
@@ -126,9 +132,41 @@ export default function ACPLayout() {
                 <SummarizeIcon fontSize="small" />
               </IconButton>
             </Badge>
-            <Button variant="outlined" size="small" onClick={signOut}>
-              Sign Out
-            </Button>
+            <IconButton
+              size="small"
+              onClick={(e) => setMenuAnchorEl(e.currentTarget)}
+              aria-label="User menu"
+              sx={{ ml: 1 }}
+            >
+              <Avatar sx={{ width: 32, height: 32, fontSize: 14 }}>
+                {user?.email ? user.email.charAt(0).toUpperCase() : ''}
+              </Avatar>
+            </IconButton>
+
+            <Menu
+              anchorEl={menuAnchorEl}
+              open={Boolean(menuAnchorEl)}
+              onClose={() => setMenuAnchorEl(null)}
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+              transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+            >
+              <MenuItem
+                onClick={() => {
+                  setMenuAnchorEl(null);
+                  navigate('/acp/settings');
+                }}
+              >
+                Settings
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  setMenuAnchorEl(null);
+                  setSignOutDialogOpen(true);
+                }}
+              >
+                Sign Out
+              </MenuItem>
+            </Menu>
           </Toolbar>
         </AppBar>
 
@@ -136,6 +174,26 @@ export default function ACPLayout() {
           <Outlet />
         </Box>
       </Box>
+
+      <Dialog
+        open={signOutDialogOpen}
+        onClose={() => setSignOutDialogOpen(false)}
+      >
+        <DialogTitle>Sign Out</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to sign out?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSignOutDialogOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={signOut} color="error" variant="contained">
+            Sign Out
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

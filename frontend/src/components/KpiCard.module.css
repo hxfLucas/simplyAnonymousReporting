@@ -1,0 +1,25 @@
+.card {
+  min-width: 180px;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.icon {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+
+.value {
+  font-weight: 600;
+}

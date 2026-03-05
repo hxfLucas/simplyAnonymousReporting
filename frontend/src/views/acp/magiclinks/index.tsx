@@ -19,6 +19,7 @@ export default function MagicLinksPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const aliasRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     fetchInitial();
@@ -163,7 +164,7 @@ export default function MagicLinksPage() {
       <div ref={sentinelRef} style={{ height: 1 }} />
       {isLoadingMore && <LinearProgress sx={{ mt: 1 }} />}
 
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
+      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} TransitionProps={{ onEntered: () => aliasRef.current?.focus() }}>
         <DialogTitle>Generate Magic Link</DialogTitle>
         <DialogContent>
           <TextField
@@ -171,6 +172,7 @@ export default function MagicLinksPage() {
             fullWidth
             value={aliasInput}
             onChange={(e) => setAliasInput(e.target.value)}
+            inputRef={aliasRef}
             sx={{ mt: 1 }}
           />
         </DialogContent>
