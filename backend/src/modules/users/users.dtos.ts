@@ -35,7 +35,7 @@ export class UpdateOwnSettingsDto {
   newPassword?: string;
 }
 
-export interface UserResponse {
+export interface UserResponseDto {
   id: string;
   email: string;
   role: string;
@@ -43,8 +43,8 @@ export interface UserResponse {
   createdAt: Date;
 }
 
-export interface ListUsersResponse {
-  data: UserResponse[];
+export interface ListUsersResponseDto {
+  data: UserResponseDto[];
   total: number;
   hasMore: boolean;
 }

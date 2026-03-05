@@ -1,4 +1,4 @@
-export interface NotificationsResponse {
+export interface NotificationsResponseDto {
   reportNotificationsData: {
     totalNew: number;
   };

@@ -3,11 +3,11 @@ import { getAuthenticatedUserData } from '../../shared/auth/authContext';
 import { User } from '../users/users.entity';
 import { Report } from '../reports/reports.entity';
 import { MagicLink } from '../magiclinks/magiclinks.entity';
-import type { DashboardStats } from './dashboard.dtos';
+import type { DashboardStatsDto } from './dashboard.dtos';
 
-export type { DashboardStats };
+export type { DashboardStatsDto };
 
-export async function getDashboardStats(): Promise<DashboardStats> {
+export async function getDashboardStats(): Promise<DashboardStatsDto> {
   const { companyId } = getAuthenticatedUserData();
   const ds = getAppDataSource();
 

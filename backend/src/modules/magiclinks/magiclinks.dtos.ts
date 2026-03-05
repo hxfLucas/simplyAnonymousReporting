@@ -7,23 +7,23 @@ export class CreateMagicLinkDto {
   alias?: string;
 }
 
-export interface MagicLinkCreatorResponse {
+export interface MagicLinkCreatorResponseDto {
   id: string;
   email: string;
 }
 
-export interface MagicLinkResponse {
+export interface MagicLinkResponseDto {
   id: string;
   reportingToken: string;
   alias: string | null;
   companyId: string;
   createdById: string | null;
   createdAt: Date;
-  createdBy: MagicLinkCreatorResponse | null;
+  createdBy: MagicLinkCreatorResponseDto | null;
 }
 
-export interface ListMagicLinksResponse {
-  data: MagicLinkResponse[];
+export interface ListMagicLinksResponseDto {
+  data: MagicLinkResponseDto[];
   total: number;
   hasMore: boolean;
 }

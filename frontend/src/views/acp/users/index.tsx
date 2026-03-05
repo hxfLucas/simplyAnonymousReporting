@@ -29,7 +29,7 @@ import { formatDate } from '../../../utils/formatDate';
 import { useAuthContext } from '../../../contexts/AuthContext';
 
 export default function UsersPage() {
-  const { users, isLoading, isLoadingMore, error, fetchInitial, loadMore, addUser, removeUser, updateUserPassword, fetchUsers } = useUsers();
+  const { users, isLoading, isLoadingMore, error, fetchInitial, loadMore, addUser, addUserState, clearAddUserState, removeUser, updateUserPassword, fetchUsers } = useUsers();
   const { user: currentUser } = useAuthContext();
   const isManager = currentUser?.role === 'manager';
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -75,6 +75,7 @@ export default function UsersPage() {
     setName('');
     setEmail('');
     setPassword('');
+    clearAddUserState();
     setDialogOpen(true);
   };
 
@@ -82,10 +83,14 @@ export default function UsersPage() {
     setDialogOpen(false);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    addUser({ name, email, password });
-    setDialogOpen(false);
+    try {
+      await addUser({ name, email, password });
+      setDialogOpen(false);
+    } catch {
+      // error is captured in addUserState.error; keep dialog open
+    }
   };
 
   const handleOpenEditDialog = (userId: string) => {
@@ -257,10 +262,13 @@ export default function UsersPage() {
               inputProps={{ minLength: 6 }}
               helperText="Minimum 6 characters"
             />
+            {addUserState.error && (
+              <Alert severity="error">{addUserState.error}</Alert>
+            )}
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2 }}>
             <Button onClick={handleCloseDialog}>Cancel</Button>
-            <Button type="submit" variant="contained">
+            <Button type="submit" variant="contained" disabled={addUserState.isLoading}>
               Submit
             </Button>
           </DialogActions>

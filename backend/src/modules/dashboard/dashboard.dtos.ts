@@ -1,4 +1,4 @@
-export interface DashboardStats {
+export interface DashboardStatsDto {
   totalCountUsers: number;
   totalCountReportsNew: number;
   totalCountReportsInReview: number;

@@ -5,11 +5,11 @@ import { MagicLink } from '../magiclinks/magiclinks.entity';
 import { enqueueReportNotification } from '../notifications/notifications.service';
 import { Report, ReportStatus } from './reports.entity';
 import { ReportStatusHistory } from './report-status-history.entity';
-import type { ListReportsResponse, ValidateReportResponse } from './reports.dtos';
+import type { ListReportsResponseDto, ValidateReportResponseDto } from './reports.dtos';
 
 export async function validateReportToken(
   token: string
-): Promise<ValidateReportResponse> {
+): Promise<ValidateReportResponseDto> {
   const repo = getAppDataSource().getRepository(MagicLink);
   const link = await repo.findOne({
     where: { reportingToken: token },
@@ -66,7 +66,7 @@ export async function submitReport(payload: {
   return saved;
 }
 
-export async function listReports(offset: number = 0, limit: number = 25): Promise<ListReportsResponse> {
+export async function listReports(offset: number = 0, limit: number = 25): Promise<ListReportsResponseDto> {
   const authData = getAuthenticatedUserData();
 
   if (!authData.companyId) {

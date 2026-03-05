@@ -26,7 +26,7 @@ export class UpdateReportStatusDto {
   status!: ReportStatus;
 }
 
-export interface ReportResponse {
+export interface ReportResponseDto {
   id: string;
   companyId: string;
   title: string;
@@ -36,13 +36,13 @@ export interface ReportResponse {
   updatedAt: Date;
 }
 
-export interface ListReportsResponse {
-  data: ReportResponse[];
+export interface ListReportsResponseDto {
+  data: ReportResponseDto[];
   total: number;
   hasMore: boolean;
 }
 
-export interface ValidateReportResponse {
+export interface ValidateReportResponseDto {
   companyId: string;
   companyName: string;
 }

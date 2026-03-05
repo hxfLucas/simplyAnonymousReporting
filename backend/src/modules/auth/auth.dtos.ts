@@ -28,20 +28,20 @@ export class RefreshTokensDto {
   refresh_token!: string;
 }
 
-export interface SessionUserResponse {
+export interface SessionUserResponseDto {
   id: string;
   email: string;
   role: string;
   companyId: string;
 }
 
-export interface CheckSessionResponse {
+export interface CheckSessionResponseDto {
   valid: true;
   refresh_token: string;
   expiresAt: number;
-  user: SessionUserResponse;
+  user: SessionUserResponseDto;
 }
 
-export interface AuthTokenResponse {
+export interface AuthTokenResponseDto {
   refresh_token: string;
 }

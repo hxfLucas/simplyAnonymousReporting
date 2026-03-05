@@ -3,7 +3,7 @@ import { hashPassword, verifyPassword } from '../../shared/utils/passwordUtils';
 import { User } from './users.entity';
 import { getAuthenticatedUserData } from '../../shared/auth/authContext';
 import { invalidateUser } from '../../shared/auth/tokenInvalidation';
-import { ListUsersResponse } from './users.dtos';
+import { ListUsersResponseDto } from './users.dtos';
 
 export type AdminContext = { id: string; role: string; companyId?: string };
 
@@ -100,7 +100,7 @@ export async function listUsers(params: {
   offset: number;
   limit: number;
   search?: string;
-}): Promise<ListUsersResponse> {
+}): Promise<ListUsersResponseDto> {
   const repo = getAppDataSource().getRepository(User);
   const qb = repo.createQueryBuilder('user').where('user.companyId = :companyId', { companyId: params.companyId });
 

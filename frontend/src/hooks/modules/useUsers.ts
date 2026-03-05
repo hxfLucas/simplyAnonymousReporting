@@ -157,9 +157,13 @@ export function useUsers() {
     }
   }, []);
 
+  const clearAddUserState = useCallback(() => {
+    setAddUserState(initialActionState);
+  }, []);
+
   const search = useCallback(async (query: string) => {
     await fetchUsers(query);
   }, [fetchUsers]);
 
-  return { ...state, fetchInitial, fetchUsers, loadMore, addUser, addUserState, removeUser, removeUserState, updateUserPassword, updatePasswordState, search };
+  return { ...state, fetchInitial, fetchUsers, loadMore, addUser, addUserState, clearAddUserState, removeUser, removeUserState, updateUserPassword, updatePasswordState, search };
 }
