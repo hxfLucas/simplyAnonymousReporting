@@ -1,7 +1,5 @@
 import { generateMagicLinkData } from '../magiclinks.utils'
-import { MagicLink } from '../magiclinks.entity'
-
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+import { UUID_REGEX } from '../../../shared/test-helpers/constants'
 
 describe('generateMagicLinkData', () => {
   it('returns an object with a reportingToken matching UUID format', async () => {

@@ -9,10 +9,6 @@ import { useDashboard } from '../../../../hooks/modules/useDashboard';
 const mockUseDashboard = vi.mocked(useDashboard);
 
 describe('DashboardPage', () => {
-  afterEach(() => {
-    vi.clearAllMocks();
-  });
-
   it('shows a loading spinner while data is loading', () => {
     mockUseDashboard.mockReturnValue({ stats: null, isLoading: true, error: null });
 

@@ -1,6 +1,5 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { screen, fireEvent } from '@testing-library/react';
 import { vi } from 'vitest';
-import { MemoryRouter } from 'react-router-dom';
 import SignUpPage from '../index';
 
 vi.mock('../../../../hooks/modules/useAuth');
@@ -10,12 +9,12 @@ vi.mock('react-router-dom', async (importOriginal) => {
 });
 
 import { useAuth } from '../../../../hooks/modules/useAuth';
+import { renderWithRouter } from '../../../../test-utils/renderWithRouter';
 
 const mockSignUp = vi.fn();
 
 describe('SignUpPage', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     vi.mocked(useAuth).mockReturnValue({
       signIn: vi.fn(),
       signInState: { isLoading: false, error: null },
@@ -26,11 +25,7 @@ describe('SignUpPage', () => {
   });
 
   it('renders all form fields and submit button', () => {
-    render(
-      <MemoryRouter>
-        <SignUpPage />
-      </MemoryRouter>,
-    );
+    renderWithRouter(<SignUpPage />);
 
     expect(screen.getByLabelText(/company/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^email/i)).toBeInTheDocument();
@@ -40,11 +35,7 @@ describe('SignUpPage', () => {
   });
 
   it('shows "Passwords do not match" error when passwords differ', () => {
-    const { container } = render(
-      <MemoryRouter>
-        <SignUpPage />
-      </MemoryRouter>,
-    );
+    const { container } = renderWithRouter(<SignUpPage />);
 
     fireEvent.change(screen.getByLabelText(/^password/i), {
       target: { value: 'password123' },
@@ -60,11 +51,7 @@ describe('SignUpPage', () => {
   });
 
   it('calls signUp with email, password, and company when passwords match', () => {
-    render(
-      <MemoryRouter>
-        <SignUpPage />
-      </MemoryRouter>,
-    );
+    renderWithRouter(<SignUpPage />);
 
     fireEvent.change(screen.getByLabelText(/company/i), {
       target: { value: 'Acme Corp' },

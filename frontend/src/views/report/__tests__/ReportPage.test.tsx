@@ -1,6 +1,5 @@
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { screen, waitFor, fireEvent } from '@testing-library/react';
 import { vi } from 'vitest';
-import { MemoryRouter } from 'react-router-dom';
 import ReportPage from '../index';
 
 vi.mock('../../../api/reports.api', () => ({
@@ -14,21 +13,17 @@ vi.mock('react-router-dom', async (importOriginal) => {
 
 import { validateReport, submitReport } from '../../../api/reports.api';
 import { useParams } from 'react-router-dom';
+import { renderWithRouter } from '../../../test-utils/renderWithRouter';
 
 describe('ReportPage', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     vi.mocked(useParams).mockReturnValue({ reportTokenId: 'abc-token' });
   });
 
   it('shows loading state initially while validation is pending', () => {
     vi.mocked(validateReport).mockReturnValue(new Promise(() => {}));
 
-    render(
-      <MemoryRouter>
-        <ReportPage />
-      </MemoryRouter>,
-    );
+    renderWithRouter(<ReportPage />);
 
     expect(screen.getByRole('progressbar')).toBeInTheDocument();
   });
@@ -36,11 +31,7 @@ describe('ReportPage', () => {
   it('shows "Invalid Link" when validation fails', async () => {
     vi.mocked(validateReport).mockRejectedValue(new Error('Not found'));
 
-    render(
-      <MemoryRouter>
-        <ReportPage />
-      </MemoryRouter>,
-    );
+    renderWithRouter(<ReportPage />);
 
     await waitFor(() => {
       expect(screen.getByText(/invalid link/i)).toBeInTheDocument();
@@ -53,11 +44,7 @@ describe('ReportPage', () => {
       companyName: 'Acme Corp',
     });
 
-    render(
-      <MemoryRouter>
-        <ReportPage />
-      </MemoryRouter>,
-    );
+    renderWithRouter(<ReportPage />);
 
     await waitFor(() => {
       expect(screen.getByText(/submit a report/i)).toBeInTheDocument();
@@ -83,11 +70,7 @@ describe('ReportPage', () => {
       updatedAt: new Date().toISOString(),
     });
 
-    render(
-      <MemoryRouter>
-        <ReportPage />
-      </MemoryRouter>,
-    );
+    renderWithRouter(<ReportPage />);
 
     await waitFor(() => {
       expect(screen.getByLabelText(/title/i)).toBeInTheDocument();

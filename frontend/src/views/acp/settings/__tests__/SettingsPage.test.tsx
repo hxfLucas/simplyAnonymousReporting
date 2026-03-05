@@ -19,10 +19,6 @@ function makeDefaultHook(overrides: Partial<ReturnType<typeof useSettings>> = {}
 }
 
 describe('SettingsPage', () => {
-  afterEach(() => {
-    vi.clearAllMocks();
-  });
-
   it('renders Settings and Change Password headings', () => {
     mockUseSettings.mockReturnValue(makeDefaultHook());
 

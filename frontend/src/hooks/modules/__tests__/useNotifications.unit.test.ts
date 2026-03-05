@@ -19,7 +19,6 @@ describe('useNotifications', () => {
 
   afterEach(() => {
     vi.useRealTimers();
-    vi.clearAllMocks();
   });
 
   it('unread starts at 0 before any fetch resolves', () => {
@@ -154,7 +153,6 @@ describe('refreshInternal', () => {
 
   afterEach(() => {
     vi.useRealTimers();
-    vi.clearAllMocks();
   });
 
   it('is a no-op when no hook is mounted — does not throw and does not call getNotifications', () => {

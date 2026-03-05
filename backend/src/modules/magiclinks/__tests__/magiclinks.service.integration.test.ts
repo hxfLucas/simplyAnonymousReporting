@@ -1,14 +1,12 @@
 import 'reflect-metadata'
-import { randomUUID } from 'node:crypto'
 import { DataSource } from 'typeorm'
 import { createTestDataSource } from '../../../shared/test-helpers/createTestDataSource'
 import { runWithTestAuth } from '../../../shared/test-helpers/runWithTestAuth'
+import { seedCompany, seedUser } from '../../../shared/test-helpers/seeders'
+import { makeAdminAuth, makeManagerAuth } from '../../../shared/test-helpers/authFactories'
+import { UUID_REGEX } from '../../../shared/test-helpers/constants'
 import { listByCompany, createMagicLink, deleteById } from '../magiclinks.service'
-import { Company } from '../../companies/companies.entity'
-import { User } from '../../users/users.entity'
 import { MagicLink } from '../magiclinks.entity'
-
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 let ds: DataSource
 
@@ -22,43 +20,20 @@ let adminUser2Id: string
 beforeAll(async () => {
   ds = await createTestDataSource()
 
-  const companyRepo = ds.getRepository(Company)
-  const userRepo = ds.getRepository(User)
-
-  const company1 = companyRepo.create({ name: 'Company One' })
-  await companyRepo.save(company1)
+  const company1 = await seedCompany(ds, { name: 'Company One' })
   company1Id = company1.id
 
-  const company2 = companyRepo.create({name: 'Company Two' })
-  await companyRepo.save(company2)
+  const company2 = await seedCompany(ds, { name: 'Company Two' })
   company2Id = company2.id
 
-  const adminUser1 = userRepo.create({
-    companyId: company1Id,
-    email: 'admin1@example.com',
-    passwordHash: 'hash',
-    role: 'admin',
-  })
-  await userRepo.save(adminUser1)
-  adminUser1Id = adminUser1.id
+  const admin1 = await seedUser(ds, { companyId: company1Id, email: 'admin1@example.com', role: 'admin' })
+  adminUser1Id = admin1.id
 
-  const managerUser1 = userRepo.create({
-    companyId: company1Id,
-    email: 'manager1@example.com',
-    passwordHash: 'hash',
-    role: 'manager',
-  })
-  await userRepo.save(managerUser1)
-  managerUser1Id = managerUser1.id
+  const manager1 = await seedUser(ds, { companyId: company1Id, email: 'manager1@example.com', role: 'manager' })
+  managerUser1Id = manager1.id
 
-  const adminUser2 = userRepo.create({
-    companyId: company2Id,
-    email: 'admin2@example.com',
-    passwordHash: 'hash',
-    role: 'admin',
-  })
-  await userRepo.save(adminUser2)
-  adminUser2Id = adminUser2.id
+  const admin2 = await seedUser(ds, { companyId: company2Id, email: 'admin2@example.com', role: 'admin' })
+  adminUser2Id = admin2.id
 })
 
 afterAll(async () => {
@@ -70,7 +45,7 @@ afterAll(async () => {
 describe('createMagicLink', () => {
   it('creates a magic link with a UUID reportingToken', async () => {
     const link = await runWithTestAuth(
-      { id: adminUser1Id, role: 'admin', companyId: company1Id },
+      makeAdminAuth({ id: adminUser1Id, companyId: company1Id }),
       () => createMagicLink(company1Id, null, adminUser1Id)
     )
 
@@ -83,7 +58,7 @@ describe('createMagicLink', () => {
 
   it('creates a magic link with an alias', async () => {
     const link = await runWithTestAuth(
-      { id: adminUser1Id, role: 'admin', companyId: company1Id },
+      makeAdminAuth({ id: adminUser1Id, companyId: company1Id }),
       () => createMagicLink(company1Id, 'My Alias', adminUser1Id)
     )
 
@@ -92,7 +67,7 @@ describe('createMagicLink', () => {
 
   it('creates a magic link without an alias', async () => {
     const link = await runWithTestAuth(
-      { id: adminUser1Id, role: 'admin', companyId: company1Id },
+      makeAdminAuth({ id: adminUser1Id, companyId: company1Id }),
       () => createMagicLink(company1Id, undefined, adminUser1Id)
     )
 
@@ -104,16 +79,16 @@ describe('listByCompany', () => {
   it('returns paginated result scoped to companyId', async () => {
     // Create links for both companies
     await runWithTestAuth(
-      { id: adminUser1Id, role: 'admin', companyId: company1Id },
+      makeAdminAuth({ id: adminUser1Id, companyId: company1Id }),
       () => createMagicLink(company1Id, 'Company1 Link', adminUser1Id)
     )
     await runWithTestAuth(
-      { id: adminUser2Id, role: 'admin', companyId: company2Id },
+      makeAdminAuth({ id: adminUser2Id, companyId: company2Id }),
       () => createMagicLink(company2Id, 'Company2 Link', adminUser2Id)
     )
 
     const result = await runWithTestAuth(
-      { id: adminUser1Id, role: 'admin', companyId: company1Id },
+      makeAdminAuth({ id: adminUser1Id, companyId: company1Id }),
       () => listByCompany(company1Id)
     )
 
@@ -129,30 +104,21 @@ describe('listByCompany', () => {
 
   it('returns correct total and hasMore with pagination', async () => {
     // Reset by using a fresh company for isolation
-    const companyRepo = ds.getRepository(Company)
-    const paginationCompany = companyRepo.create({ name: 'Pagination Company' })
-    await companyRepo.save(paginationCompany)
+    const paginationCompany = await seedCompany(ds, { name: 'Pagination Company' })
     const pagCompanyId = paginationCompany.id
 
-    const userRepo = ds.getRepository(User)
-    const pagUser = userRepo.create({
-      companyId: pagCompanyId,
-      email: 'paguser@example.com',
-      passwordHash: 'hash',
-      role: 'admin',
-    })
-    await userRepo.save(pagUser)
+    const pagUser = await seedUser(ds, { companyId: pagCompanyId, email: 'paguser@example.com', role: 'admin' })
 
     // Create 3 links
     for (let i = 0; i < 3; i++) {
       await runWithTestAuth(
-        { id: pagUser.id, role: 'admin', companyId: pagCompanyId },
+        makeAdminAuth({ id: pagUser.id, companyId: pagCompanyId }),
         () => createMagicLink(pagCompanyId, `Link ${i}`, pagUser.id)
       )
     }
 
     const firstPage = await runWithTestAuth(
-      { id: pagUser.id, role: 'admin', companyId: pagCompanyId },
+      makeAdminAuth({ id: pagUser.id, companyId: pagCompanyId }),
       () => listByCompany(pagCompanyId, 0, 2)
     )
 
@@ -161,7 +127,7 @@ describe('listByCompany', () => {
     expect(firstPage.hasMore).toBe(true)
 
     const secondPage = await runWithTestAuth(
-      { id: pagUser.id, role: 'admin', companyId: pagCompanyId },
+      makeAdminAuth({ id: pagUser.id, companyId: pagCompanyId }),
       () => listByCompany(pagCompanyId, 2, 2)
     )
 
@@ -174,7 +140,7 @@ describe('listByCompany', () => {
 describe('deleteById', () => {
   async function seedLink(companyId: string, createdById: string, alias?: string) {
     return runWithTestAuth(
-      { id: createdById, role: 'admin', companyId },
+      makeAdminAuth({ id: createdById, companyId }),
       () => createMagicLink(companyId, alias ?? null, createdById)
     )
   }
@@ -184,7 +150,7 @@ describe('deleteById', () => {
 
     await expect(
       runWithTestAuth(
-        { id: adminUser1Id, role: 'admin', companyId: company1Id },
+        makeAdminAuth({ id: adminUser1Id, companyId: company1Id }),
         () => deleteById(link.id, company1Id, adminUser1Id, 'admin')
       )
     ).resolves.toBeUndefined()
@@ -195,7 +161,7 @@ describe('deleteById', () => {
 
     await expect(
       runWithTestAuth(
-        { id: managerUser1Id, role: 'manager', companyId: company1Id },
+        makeManagerAuth({ id: managerUser1Id, companyId: company1Id }),
         () => deleteById(link.id, company1Id, managerUser1Id, 'manager')
       )
     ).resolves.toBeUndefined()
@@ -207,7 +173,7 @@ describe('deleteById', () => {
     let thrownError: any
     try {
       await runWithTestAuth(
-        { id: managerUser1Id, role: 'manager', companyId: company1Id },
+        makeManagerAuth({ id: managerUser1Id, companyId: company1Id }),
         () => deleteById(link.id, company1Id, managerUser1Id, 'manager')
       )
     } catch (err) {
@@ -227,7 +193,7 @@ describe('deleteById', () => {
     try {
       // Claim it belongs to company1 — should not be found
       await runWithTestAuth(
-        { id: adminUser1Id, role: 'admin', companyId: company1Id },
+        makeAdminAuth({ id: adminUser1Id, companyId: company1Id }),
         () => deleteById(link.id, company1Id, adminUser1Id, 'admin')
       )
     } catch (err) {

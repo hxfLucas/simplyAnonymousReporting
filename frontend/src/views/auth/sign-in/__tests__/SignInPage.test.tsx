@@ -1,6 +1,5 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { screen, fireEvent } from '@testing-library/react';
 import { vi } from 'vitest';
-import { MemoryRouter } from 'react-router-dom';
 import SignInPage from '../index';
 
 vi.mock('../../../../hooks/modules/useAuth');
@@ -21,19 +20,15 @@ vi.mock('react-router-dom', async (importOriginal) => {
 import { useAuth } from '../../../../hooks/modules/useAuth';
 import { useAuthContext } from '../../../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { renderWithRouter } from '../../../../test-utils/renderWithRouter';
+import { makeNullAuthContext } from '../../../../test-utils/mocks';
 
 const mockSignIn = vi.fn();
 
 describe('SignInPage', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     vi.mocked(useNavigate).mockReturnValue(vi.fn());
-    vi.mocked(useAuthContext).mockReturnValue({
-      user: null,
-      isLoading: false,
-      updateSession: vi.fn(),
-      signOut: vi.fn(),
-    });
+    vi.mocked(useAuthContext).mockReturnValue(makeNullAuthContext());
     vi.mocked(useAuth).mockReturnValue({
       signIn: mockSignIn,
       signInState: { isLoading: false, error: null },
@@ -44,11 +39,7 @@ describe('SignInPage', () => {
   });
 
   it('renders email and password fields and submit button', () => {
-    render(
-      <MemoryRouter>
-        <SignInPage />
-      </MemoryRouter>,
-    );
+    renderWithRouter(<SignInPage />);
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
@@ -63,21 +54,13 @@ describe('SignInPage', () => {
       signOut: vi.fn(),
     });
 
-    render(
-      <MemoryRouter>
-        <SignInPage />
-      </MemoryRouter>,
-    );
+    renderWithRouter(<SignInPage />);
 
     expect(screen.getByText('Invalid credentials')).toBeInTheDocument();
   });
 
   it('calls signIn with email and password when form is submitted', () => {
-    render(
-      <MemoryRouter>
-        <SignInPage />
-      </MemoryRouter>,
-    );
+    renderWithRouter(<SignInPage />);
 
     fireEvent.change(screen.getByLabelText(/email/i), {
       target: { value: 'test@example.com' },

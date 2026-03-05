@@ -1,5 +1,4 @@
-import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { screen } from '@testing-library/react';
 import { vi } from 'vitest';
 import ReportsPage from '../index';
 
@@ -13,15 +12,8 @@ vi.mock('../../../../utils/formatDate', () => ({
 
 import { useReports } from '../../../../hooks/modules/useReports';
 import { useAuthContext } from '../../../../contexts/AuthContext';
-
-// jsdom does not implement IntersectionObserver — provide a no-op stub
-beforeAll(() => {
-  globalThis.IntersectionObserver = class IntersectionObserver {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  } as unknown as typeof IntersectionObserver;
-});
+import { renderWithRouter } from '../../../../test-utils/renderWithRouter';
+import { makeAdminAuthContext } from '../../../../test-utils/mocks';
 
 const mockUseReports = vi.mocked(useReports);
 const mockUseAuthContext = vi.mocked(useAuthContext);
@@ -40,29 +32,15 @@ function makeDefaultHook(overrides: Partial<ReturnType<typeof useReports>> = {})
   } as unknown as ReturnType<typeof useReports>;
 }
 
-function renderPage() {
-  return render(
-    <MemoryRouter>
-      <ReportsPage />
-    </MemoryRouter>,
-  );
-}
-
 describe('ReportsPage', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    mockUseAuthContext.mockReturnValue({
-      user: { id: '1', email: 'admin@test.com', role: 'admin' },
-      isLoading: false,
-      updateSession: vi.fn(),
-      signOut: vi.fn(),
-    });
+    mockUseAuthContext.mockReturnValue(makeAdminAuthContext());
   });
 
   it('renders "Reports" heading', () => {
     mockUseReports.mockReturnValue(makeDefaultHook());
 
-    renderPage();
+    renderWithRouter(<ReportsPage />);
 
     expect(screen.getByText('Reports')).toBeInTheDocument();
   });
@@ -70,7 +48,7 @@ describe('ReportsPage', () => {
   it('shows empty state when no reports', () => {
     mockUseReports.mockReturnValue(makeDefaultHook({ reports: [] }));
 
-    renderPage();
+    renderWithRouter(<ReportsPage />);
 
     expect(screen.getByText(/no reports found/i)).toBeInTheDocument();
   });
@@ -85,7 +63,7 @@ describe('ReportsPage', () => {
       }),
     );
 
-    renderPage();
+    renderWithRouter(<ReportsPage />);
 
     expect(screen.getByText('Broken pipe')).toBeInTheDocument();
     expect(screen.getByText('Faulty wiring')).toBeInTheDocument();
@@ -99,7 +77,7 @@ describe('ReportsPage', () => {
   it('shows an error alert when there is an error', () => {
     mockUseReports.mockReturnValue(makeDefaultHook({ error: 'Failed to load reports' }));
 
-    renderPage();
+    renderWithRouter(<ReportsPage />);
 
     expect(screen.getByRole('alert')).toBeInTheDocument();
     expect(screen.getByText('Failed to load reports')).toBeInTheDocument();

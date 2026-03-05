@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser';
 import jwt from 'jsonwebtoken';
 import { jwtGuard } from '../jwtGuard';
 import { invalidationMap } from '../../../shared/auth/tokenInvalidation';
+import { TEST_JWT_SECRET, makeTestToken } from '../../../shared/test-helpers/guardTestUtils';
 
 // Mock runWithAuthUser to just call next() so we don't need AsyncLocalStorage
 jest.mock('../../../shared/auth/authContext', () => ({
@@ -18,8 +19,6 @@ jest.mock('../../../shared/auth/tokenInvalidation', () => {
   };
 });
 
-const SECRET = 'test-secret';
-
 function makeApp() {
   const app = express();
   app.use(cookieParser());
@@ -29,12 +28,8 @@ function makeApp() {
   return app;
 }
 
-function makeToken(payload: object, secret = SECRET, opts: jwt.SignOptions = {}) {
-  return jwt.sign(payload, secret, { algorithm: 'HS256', expiresIn: '1h', ...opts });
-}
-
 beforeAll(() => {
-  process.env.JWT_ACCESS_SECRET = SECRET;
+  process.env.JWT_ACCESS_SECRET = TEST_JWT_SECRET;
 });
 
 beforeEach(() => {
@@ -75,7 +70,7 @@ describe('jwtGuard', () => {
 
   describe('when the cookie contains a JWT signed with a wrong secret', () => {
     it('returns 401 with { message: "invalid_token" }', async () => {
-      const token = makeToken(
+      const token = makeTestToken(
         { sub: 'user-1', email: 'a@b.com', role: 'admin', companyId: 'c1' },
         'wrong-secret',
       );
@@ -91,9 +86,9 @@ describe('jwtGuard', () => {
 
   describe('when the cookie contains an expired JWT', () => {
     it('returns 401 with { message: "invalid_token" }', async () => {
-      const token = makeToken(
+      const token = makeTestToken(
         { sub: 'user-1', email: 'a@b.com', role: 'admin', companyId: 'c1' },
-        SECRET,
+        TEST_JWT_SECRET,
         { expiresIn: -10 }, // already expired
       );
 
@@ -114,7 +109,7 @@ describe('jwtGuard', () => {
       const futureSeconds = Math.floor(Date.now() / 1000) + 60;
       invalidationMap.set(userId, futureSeconds);
 
-      const token = makeToken({
+      const token = makeTestToken({
         sub: userId,
         email: 'inv@b.com',
         role: 'admin',
@@ -133,7 +128,7 @@ describe('jwtGuard', () => {
   describe('when a valid, non-invalidated JWT is present', () => {
     it('returns 200 and calls next(), populating req.user', async () => {
       const userId = 'user-valid';
-      const token = makeToken({
+      const token = makeTestToken({
         sub: userId,
         email: 'valid@b.com',
         role: 'manager',

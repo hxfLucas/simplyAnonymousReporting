@@ -22,7 +22,6 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 
 describe('AuthContext / AuthProvider', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     localStorage.clear();
   });
 

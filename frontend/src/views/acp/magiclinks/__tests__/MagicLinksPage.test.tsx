@@ -1,5 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { screen, fireEvent } from '@testing-library/react';
 import { vi } from 'vitest';
 import MagicLinksPage from '../index';
 
@@ -14,15 +13,8 @@ vi.mock('../../../../utils/formatDate', () => ({
 import { within } from '@testing-library/react';
 import { useMagicLinks } from '../../../../hooks/modules/useMagicLinks';
 import { useAuthContext } from '../../../../contexts/AuthContext';
-
-// jsdom does not implement IntersectionObserver — provide a no-op stub
-beforeAll(() => {
-  globalThis.IntersectionObserver = class IntersectionObserver {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  } as unknown as typeof IntersectionObserver;
-});
+import { renderWithRouter } from '../../../../test-utils/renderWithRouter';
+import { makeAdminAuthContext } from '../../../../test-utils/mocks';
 
 const mockUseMagicLinks = vi.mocked(useMagicLinks);
 const mockUseAuthContext = vi.mocked(useAuthContext);
@@ -41,29 +33,15 @@ function makeDefaultHook(overrides: Partial<ReturnType<typeof useMagicLinks>> = 
   } as unknown as ReturnType<typeof useMagicLinks>;
 }
 
-function renderPage() {
-  return render(
-    <MemoryRouter>
-      <MagicLinksPage />
-    </MemoryRouter>,
-  );
-}
-
 describe('MagicLinksPage', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    mockUseAuthContext.mockReturnValue({
-      user: { id: 'u1', email: 'admin@test.com', role: 'admin' },
-      isLoading: false,
-      updateSession: vi.fn(),
-      signOut: vi.fn(),
-    });
+    mockUseAuthContext.mockReturnValue(makeAdminAuthContext({ user: { id: 'u1', email: 'admin@test.com', role: 'admin' } }));
   });
 
   it('renders "Magic Links" heading and generate button', () => {
     mockUseMagicLinks.mockReturnValue(makeDefaultHook());
 
-    renderPage();
+    renderWithRouter(<MagicLinksPage />);
 
     expect(screen.getByText('Magic Links')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /generate magic link/i })).toBeInTheDocument();
@@ -72,7 +50,7 @@ describe('MagicLinksPage', () => {
   it('shows empty state when no magic links', () => {
     mockUseMagicLinks.mockReturnValue(makeDefaultHook({ magicLinks: [] }));
 
-    renderPage();
+    renderWithRouter(<MagicLinksPage />);
 
     expect(screen.getByText(/no magic links yet/i)).toBeInTheDocument();
   });
@@ -99,7 +77,7 @@ describe('MagicLinksPage', () => {
       }),
     );
 
-    renderPage();
+    renderWithRouter(<MagicLinksPage />);
 
     expect(screen.getByText('Campaign A')).toBeInTheDocument();
     // Second row alias is null so it shows '—'
@@ -110,7 +88,7 @@ describe('MagicLinksPage', () => {
   it('opens generate dialog when button is clicked', async () => {
     mockUseMagicLinks.mockReturnValue(makeDefaultHook());
 
-    renderPage();
+    renderWithRouter(<MagicLinksPage />);
 
     fireEvent.click(screen.getByRole('button', { name: /generate magic link/i }));
 

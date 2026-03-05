@@ -29,7 +29,6 @@ describe('useAuth', () => {
   const mockContextSignOut = vi.fn();
 
   beforeEach(() => {
-    vi.clearAllMocks();
     vi.mocked(useNavigate).mockReturnValue(mockNavigate);
     vi.mocked(useAuthContext).mockReturnValue({
       updateSession: mockUpdateSession,

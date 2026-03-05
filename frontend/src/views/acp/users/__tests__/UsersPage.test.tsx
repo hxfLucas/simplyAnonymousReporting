@@ -1,5 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { vi } from 'vitest';
 import UsersPage from '../index';
 
@@ -16,15 +15,8 @@ vi.mock('../../../../utils/formatDate', () => ({
 
 import { useUsers } from '../../../../hooks/modules/useUsers';
 import { useAuthContext } from '../../../../contexts/AuthContext';
-
-// jsdom does not implement IntersectionObserver — provide a no-op stub
-beforeAll(() => {
-  globalThis.IntersectionObserver = class IntersectionObserver {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  } as unknown as typeof IntersectionObserver;
-});
+import { renderWithRouter } from '../../../../test-utils/renderWithRouter';
+import { makeAdminAuthContext } from '../../../../test-utils/mocks';
 
 const mockUseUsers = vi.mocked(useUsers);
 const mockUseAuthContext = vi.mocked(useAuthContext);
@@ -47,29 +39,15 @@ function makeDefaultHook(overrides: Partial<ReturnType<typeof useUsers>> = {}): 
   } as unknown as ReturnType<typeof useUsers>;
 }
 
-function renderPage() {
-  return render(
-    <MemoryRouter>
-      <UsersPage />
-    </MemoryRouter>,
-  );
-}
-
 describe('UsersPage', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    mockUseAuthContext.mockReturnValue({
-      user: { id: '1', email: 'admin@test.com', role: 'admin' },
-      isLoading: false,
-      updateSession: vi.fn(),
-      signOut: vi.fn(),
-    });
+    mockUseAuthContext.mockReturnValue(makeAdminAuthContext());
   });
 
   it('renders "Users" heading and "Add User" button', () => {
     mockUseUsers.mockReturnValue(makeDefaultHook());
 
-    renderPage();
+    renderWithRouter(<UsersPage />);
 
     expect(screen.getByText('Users')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /add user/i })).toBeInTheDocument();
@@ -78,7 +56,7 @@ describe('UsersPage', () => {
   it('shows empty state message when users array is empty', () => {
     mockUseUsers.mockReturnValue(makeDefaultHook({ users: [] }));
 
-    renderPage();
+    renderWithRouter(<UsersPage />);
 
     expect(screen.getByText(/no users yet/i)).toBeInTheDocument();
   });
@@ -93,7 +71,7 @@ describe('UsersPage', () => {
       }),
     );
 
-    renderPage();
+    renderWithRouter(<UsersPage />);
 
     expect(screen.getByText('alice@example.com')).toBeInTheDocument();
     expect(screen.getByText('bob@example.com')).toBeInTheDocument();
@@ -104,7 +82,7 @@ describe('UsersPage', () => {
   it('opens the Add User dialog when "Add User" button is clicked', async () => {
     mockUseUsers.mockReturnValue(makeDefaultHook());
 
-    renderPage();
+    renderWithRouter(<UsersPage />);
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
@@ -123,7 +101,7 @@ describe('UsersPage', () => {
       }),
     );
 
-    renderPage();
+    renderWithRouter(<UsersPage />);
 
     // Open dialog
     fireEvent.click(screen.getByRole('button', { name: /add user/i }));

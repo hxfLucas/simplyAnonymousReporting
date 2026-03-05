@@ -1,11 +1,9 @@
 import 'reflect-metadata';
-import { randomUUID } from 'node:crypto';
 import { DataSource } from 'typeorm';
 import { createTestDataSource } from '../../../shared/test-helpers/createTestDataSource';
 import { runWithTestAuth } from '../../../shared/test-helpers/runWithTestAuth';
-import { Company } from '../../companies/companies.entity';
-import { User } from '../../users/users.entity';
-import { MagicLink } from '../../magiclinks/magiclinks.entity';
+import { seedCompany, seedUser, seedMagicLink } from '../../../shared/test-helpers/seeders';
+import { makeAdminAuth } from '../../../shared/test-helpers/authFactories';
 import { Report } from '../reports.entity';
 import { ReportStatusHistory } from '../report-status-history.entity';
 import {
@@ -32,40 +30,18 @@ const REPORTING_TOKEN = 'test-reporting-token-abc123';
 beforeAll(async () => {
   ds = await createTestDataSource();
 
-  // Seed company
-  const companyRepo = ds.getRepository(Company);
-  const company = companyRepo.create({ name: 'Acme Corp' });
-  const savedCompany = await companyRepo.save(company);
-  companyId = savedCompany.id;
+  const company = await seedCompany(ds, { name: 'Acme Corp' });
+  companyId = company.id;
 
-  // Seed user (admin)
-  const userRepo = ds.getRepository(User);
-  const user = userRepo.create({
-    companyId,
-    email: 'admin@acme.com',
-    passwordHash: 'salt:hash',
-    role: 'admin',
-  });
-  const savedUser = await userRepo.save(user);
-  userId = savedUser.id;
+  const user = await seedUser(ds, { companyId, email: 'admin@acme.com' });
+  userId = user.id;
 
-  // Seed magic link with known reportingToken
-  const mlRepo = ds.getRepository(MagicLink);
-  const magicLink = mlRepo.create({
-    reportingToken: REPORTING_TOKEN,
-    companyId,
-    alias: null,
-    createdById: userId,
-  });
-  await mlRepo.save(magicLink);
+  await seedMagicLink(ds, { companyId, createdById: userId, reportingToken: REPORTING_TOKEN });
 });
 
 afterAll(async () => {
   await ds.destroy();
 });
-
-// ── helpers ──────────────────────────────────────────────────────────────────
-const adminAuth = () => ({ id: userId, role: 'admin', companyId });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // validateReportToken
@@ -159,7 +135,7 @@ describe('listReports', () => {
   });
 
   it('returns paginated results scoped to the auth companyId', async () => {
-    const result = await runWithTestAuth(adminAuth(), () => listReports(0, 25));
+    const result = await runWithTestAuth(makeAdminAuth({ id: userId, companyId }), () => listReports(0, 25));
     expect(result.data.length).toBeGreaterThan(0);
     expect(result.total).toBeGreaterThan(0);
     result.data.forEach((r) => expect(r.companyId).toBe(companyId));
@@ -167,12 +143,12 @@ describe('listReports', () => {
 
   it('returns hasMore=true when there are more results beyond the page', async () => {
     // seed enough reports to exceed limit of 1
-    const total = await runWithTestAuth(adminAuth(), () =>
+    const total = await runWithTestAuth(makeAdminAuth({ id: userId, companyId }), () =>
       listReports(0, 25).then((r) => r.total)
     );
 
     if (total >= 2) {
-      const result = await runWithTestAuth(adminAuth(), () => listReports(0, 1));
+      const result = await runWithTestAuth(makeAdminAuth({ id: userId, companyId }), () => listReports(0, 1));
       expect(result.hasMore).toBe(true);
     } else {
       // not enough data to test — skip gracefully
@@ -181,7 +157,7 @@ describe('listReports', () => {
   });
 
   it('returns hasMore=false on the last page', async () => {
-    const result = await runWithTestAuth(adminAuth(), () => listReports(0, 10000));
+    const result = await runWithTestAuth(makeAdminAuth({ id: userId, companyId }), () => listReports(0, 10000));
     expect(result.hasMore).toBe(false);
   });
 
@@ -205,7 +181,7 @@ describe('deleteReport', () => {
       })
     );
 
-    await runWithTestAuth(adminAuth(), () => deleteReport(report.id));
+    await runWithTestAuth(makeAdminAuth({ id: userId, companyId }), () => deleteReport(report.id));
 
     const inDb = await ds.getRepository(Report).findOneBy({ id: report.id });
     expect(inDb).toBeNull();
@@ -213,7 +189,7 @@ describe('deleteReport', () => {
 
   it('throws NOT_FOUND (404) for a non-existent report id', async () => {
     await expect(
-      runWithTestAuth(adminAuth(), () =>
+      runWithTestAuth(makeAdminAuth({ id: userId, companyId }), () =>
         deleteReport('00000000-0000-0000-0000-000000000000')
       )
     ).rejects.toMatchObject({ status: 404, code: 'NOT_FOUND' });
@@ -231,24 +207,12 @@ describe('deleteReport', () => {
     );
 
     // Create a second company and act as that company's admin
-    const otherCompanyRepo = ds.getRepository(Company);
-    const otherCompany = await otherCompanyRepo.save(
-      otherCompanyRepo.create({ name: 'Other Corp' })
-    );
-
-    const otherUserRepo = ds.getRepository(User);
-    const otherUser = await otherUserRepo.save(
-      otherUserRepo.create({
-        companyId: otherCompany.id,
-        email: 'admin@other.com',
-        passwordHash: 'salt:hash',
-        role: 'admin',
-      })
-    );
+    const otherCompany = await seedCompany(ds, { name: 'Other Corp' });
+    const otherUser = await seedUser(ds, { companyId: otherCompany.id, email: 'admin@other.com' });
 
     await expect(
       runWithTestAuth(
-        { id: otherUser.id, role: 'admin', companyId: otherCompany.id },
+        makeAdminAuth({ id: otherUser.id, companyId: otherCompany.id }),
         () => deleteReport(report.id)
       )
     ).rejects.toMatchObject({ status: 404, code: 'NOT_FOUND' });
@@ -275,7 +239,7 @@ describe('updateReportStatus', () => {
   });
 
   it('updates the status and creates a ReportStatusHistory row', async () => {
-    const updated = await runWithTestAuth(adminAuth(), () =>
+    const updated = await runWithTestAuth(makeAdminAuth({ id: userId, companyId }), () =>
       updateReportStatus({ id: reportId, status: 'in_review' })
     );
 
@@ -296,7 +260,7 @@ describe('updateReportStatus', () => {
       .getRepository(ReportStatusHistory)
       .findBy({ reportId });
 
-    const result = await runWithTestAuth(adminAuth(), () =>
+    const result = await runWithTestAuth(makeAdminAuth({ id: userId, companyId }), () =>
       updateReportStatus({ id: reportId, status: 'in_review' })
     );
 
@@ -310,22 +274,19 @@ describe('updateReportStatus', () => {
 
   it('throws NOT_FOUND (404) for a non-existent report id', async () => {
     await expect(
-      runWithTestAuth(adminAuth(), () =>
+      runWithTestAuth(makeAdminAuth({ id: userId, companyId }), () =>
         updateReportStatus({ id: '00000000-0000-0000-0000-000000000000', status: 'resolved' })
       )
     ).rejects.toMatchObject({ status: 404, code: 'NOT_FOUND' });
   });
 
   it('throws NOT_FOUND (404) when report belongs to a different company', async () => {
-    const otherCompanyRepo = ds.getRepository(Company);
-    const otherCompany = await otherCompanyRepo.findOneByOrFail({ name: 'Other Corp' });
-
-    const otherUserRepo = ds.getRepository(User);
-    const otherUser = await otherUserRepo.findOneByOrFail({ email: 'admin@other.com' });
+    const otherCompany = await seedCompany(ds, { name: 'Other Corp 2' });
+    const otherUser = await seedUser(ds, { companyId: otherCompany.id, email: 'admin@other2.com' });
 
     await expect(
       runWithTestAuth(
-        { id: otherUser.id, role: 'admin', companyId: otherCompany.id },
+        makeAdminAuth({ id: otherUser.id, companyId: otherCompany.id }),
         () => updateReportStatus({ id: reportId, status: 'resolved' })
       )
     ).rejects.toMatchObject({ status: 404, code: 'NOT_FOUND' });

@@ -3,7 +3,8 @@ import crypto from 'crypto';
 import { DataSource } from 'typeorm';
 import { createTestDataSource } from '../../../shared/test-helpers/createTestDataSource';
 import { runWithTestAuth } from '../../../shared/test-helpers/runWithTestAuth';
-import { Company } from '../../companies/companies.entity';
+import { seedCompany, seedUser } from '../../../shared/test-helpers/seeders';
+import { makeAdminAuth, makeManagerAuth } from '../../../shared/test-helpers/authFactories';
 import { User } from '../users.entity';
 import {
   createUserForCompany,
@@ -19,42 +20,19 @@ let companyId: string;
 let adminUserId: string;
 let managerUserId: string;
 
-const adminAuth = () => ({ id: adminUserId, role: 'admin', companyId });
-const managerAuth = () => ({ id: managerUserId, role: 'manager', companyId });
-
 // ─── Setup / teardown ────────────────────────────────────────────────────────
 
 beforeAll(async () => {
   ds = await createTestDataSource();
 
-  companyId = crypto.randomUUID();
-  adminUserId = crypto.randomUUID();
-  managerUserId = crypto.randomUUID();
+  const company = await seedCompany(ds, { name: 'Test Corp' });
+  companyId = company.id;
 
-  const companyRepo = ds.getRepository(Company);
-  await companyRepo.save(
-    companyRepo.create({ id: companyId, name: 'Test Corp' } as Partial<Company>),
-  );
+  const admin = await seedUser(ds, { companyId, email: 'admin@test.com' });
+  adminUserId = admin.id;
 
-  const userRepo = ds.getRepository(User);
-  await userRepo.save(
-    userRepo.create({
-      id: adminUserId,
-      companyId,
-      email: 'admin@test.com',
-      passwordHash: 'salthex:keyhex',
-      role: 'admin',
-    } as Partial<User>),
-  );
-  await userRepo.save(
-    userRepo.create({
-      id: managerUserId,
-      companyId,
-      email: 'manager@test.com',
-      passwordHash: 'salthex:keyhex',
-      role: 'manager',
-    } as Partial<User>),
-  );
+  const manager = await seedUser(ds, { companyId, email: 'manager@test.com', role: 'manager' });
+  managerUserId = manager.id;
 });
 
 afterAll(async () => {
@@ -65,7 +43,7 @@ afterAll(async () => {
 
 describe('createUserForCompany', () => {
   it('admin role → creates user; passwordHash is in salt:hex format and role is manager', async () => {
-    const created = await runWithTestAuth(adminAuth(), () =>
+    const created = await runWithTestAuth(makeAdminAuth({ id: adminUserId, companyId }), () =>
       createUserForCompany({ email: 'new-user@test.com', password: 'Secret123!' }),
     );
 
@@ -80,7 +58,7 @@ describe('createUserForCompany', () => {
   });
 
   it('manager role → throws FORBIDDEN (403)', async () => {
-    const err: any = await runWithTestAuth(managerAuth(), () =>
+    const err: any = await runWithTestAuth(makeManagerAuth({ id: managerUserId, companyId }), () =>
       createUserForCompany({ email: 'should-not-exist@test.com', password: 'pw' }),
     ).catch((e) => e);
 
@@ -101,7 +79,7 @@ describe('createUserForCompany', () => {
       } as Partial<User>),
     );
 
-    const err: any = await runWithTestAuth(adminAuth(), () =>
+    const err: any = await runWithTestAuth(makeAdminAuth({ id: adminUserId, companyId }), () =>
       createUserForCompany({ email: 'duplicate@test.com', password: 'pw2' }),
     ).catch((e) => e);
 
@@ -132,7 +110,7 @@ describe('deleteUserFromCompany', () => {
   });
 
   it('admin deletes manager → user is removed from DB', async () => {
-    await runWithTestAuth(adminAuth(), () =>
+    await runWithTestAuth(makeAdminAuth({ id: adminUserId, companyId }), () =>
       deleteUserFromCompany(targetManagerId, companyId),
     );
 
@@ -141,7 +119,7 @@ describe('deleteUserFromCompany', () => {
   });
 
   it('manager role → throws FORBIDDEN (403)', async () => {
-    const err: any = await runWithTestAuth(managerAuth(), () =>
+    const err: any = await runWithTestAuth(makeManagerAuth({ id: managerUserId, companyId }), () =>
       deleteUserFromCompany(targetManagerId, companyId),
     ).catch((e) => e);
 
@@ -150,7 +128,7 @@ describe('deleteUserFromCompany', () => {
   });
 
   it('unknown user id → throws NOT_FOUND (404)', async () => {
-    const err: any = await runWithTestAuth(adminAuth(), () =>
+    const err: any = await runWithTestAuth(makeAdminAuth({ id: adminUserId, companyId }), () =>
       deleteUserFromCompany('00000000-0000-0000-0000-000000000000', companyId),
     ).catch((e) => e);
 
@@ -159,7 +137,7 @@ describe('deleteUserFromCompany', () => {
   });
 
   it('target user is admin → throws CANNOT_DELETE_ADMIN (403)', async () => {
-    const err: any = await runWithTestAuth(adminAuth(), () =>
+    const err: any = await runWithTestAuth(makeAdminAuth({ id: adminUserId, companyId }), () =>
       deleteUserFromCompany(adminUserId, companyId),
     ).catch((e) => e);
 
@@ -189,7 +167,7 @@ describe('updateUserPassword', () => {
   });
 
   it('admin updates password → new passwordHash is saved in salt:hex format', async () => {
-    await runWithTestAuth(adminAuth(), () =>
+    await runWithTestAuth(makeAdminAuth({ id: adminUserId, companyId }), () =>
       updateUserPassword({ id: targetUserId, password: 'NewPass456!' }),
     );
 
@@ -200,7 +178,7 @@ describe('updateUserPassword', () => {
   });
 
   it('non-admin role → throws FORBIDDEN (403)', async () => {
-    const err: any = await runWithTestAuth(managerAuth(), () =>
+    const err: any = await runWithTestAuth(makeManagerAuth({ id: managerUserId, companyId }), () =>
       updateUserPassword({ id: targetUserId, password: 'irrelevant' }),
     ).catch((e) => e);
 
@@ -209,7 +187,7 @@ describe('updateUserPassword', () => {
   });
 
   it('unknown user id → throws NOT_FOUND (404)', async () => {
-    const err: any = await runWithTestAuth(adminAuth(), () =>
+    const err: any = await runWithTestAuth(makeAdminAuth({ id: adminUserId, companyId }), () =>
       updateUserPassword({ id: '00000000-0000-0000-0000-000000000000', password: 'pw' }),
     ).catch((e) => e);
 
@@ -225,24 +203,16 @@ describe('listUsers', () => {
 
   beforeAll(async () => {
     // Use a dedicated company so row counts are predictable
-    listCompanyId = crypto.randomUUID();
-    const companyRepo = ds.getRepository(Company);
-    await companyRepo.save(
-      companyRepo.create({ id: listCompanyId, name: 'List Corp' } as Partial<Company>),
-    );
+    const listCompany = await seedCompany(ds, { name: 'List Corp' });
+    listCompanyId = listCompany.id;
 
-    const userRepo = ds.getRepository(User);
-    // Seed 3 users with explicit IDs
+    // Seed 3 users
     for (let i = 1; i <= 3; i++) {
-      await userRepo.save(
-        userRepo.create({
-          id: crypto.randomUUID(),
-          companyId: listCompanyId,
-          email: `list-user-${i}@test.com`,
-          passwordHash: 'salthex:keyhex',
-          role: 'manager',
-        } as Partial<User>),
-      );
+      await seedUser(ds, {
+        companyId: listCompanyId,
+        email: `list-user-${i}@test.com`,
+        role: 'manager',
+      });
     }
   });
 
@@ -270,11 +240,7 @@ describe('listUsers', () => {
   });
 
   it('returns empty data for a company with no users', async () => {
-    const companyRepo = ds.getRepository(Company);
-    const emptyCompanyId = crypto.randomUUID();
-    const emptyCompany = await companyRepo.save(
-      companyRepo.create({ id: emptyCompanyId, name: 'Empty Corp' } as Partial<Company>),
-    );
+    const emptyCompany = await seedCompany(ds, { name: 'Empty Corp' });
 
     const result = await listUsers({ companyId: emptyCompany.id, offset: 0, limit: 10 });
 
@@ -383,21 +349,12 @@ describe('listUsers', () => {
 
     it('search is isolated per company — does not return users from other companies with matching emails', async () => {
       // Create a second company with a user that has a searchable string
-      const otherCompanyRepo = ds.getRepository(Company);
-      const otherCompany = await otherCompanyRepo.save(
-        otherCompanyRepo.create({ id: crypto.randomUUID(), name: 'Search Test Corp' } as Partial<Company>),
-      );
-
-      const otherUserRepo = ds.getRepository(User);
-      await otherUserRepo.save(
-        otherUserRepo.create({
-          id: crypto.randomUUID(),
-          companyId: otherCompany.id,
-          email: 'search-match@example.com',
-          passwordHash: 'salthex:keyhex',
-          role: 'manager',
-        } as Partial<User>),
-      );
+      const otherCompany = await seedCompany(ds, { name: 'Search Test Corp' });
+      await seedUser(ds, {
+        companyId: otherCompany.id,
+        email: 'search-match@example.com',
+        role: 'manager',
+      });
 
       // Search in listCompanyId should not find the user from otherCompany
       const result = await listUsers({
