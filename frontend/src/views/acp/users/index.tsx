@@ -12,6 +12,7 @@ import {
   InputAdornment,
   LinearProgress,
   Paper,
+  Snackbar,
   Table,
   TableBody,
   TableCell,
@@ -33,12 +34,15 @@ export default function UsersPage() {
   const { user: currentUser } = useAuthContext();
   const isManager = currentUser?.role === 'manager';
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editUserId, setEditUserId] = useState<string>('');
   const [editPassword, setEditPassword] = useState('');
+  const [deleteConfirmDialogOpen, setDeleteConfirmDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<{ id: string; email: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [successOpen, setSuccessOpen] = useState(false);
 
   const sentinelRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -72,7 +76,6 @@ export default function UsersPage() {
   }, []);
 
   const handleOpenDialog = () => {
-    setName('');
     setEmail('');
     setPassword('');
     clearAddUserState();
@@ -83,11 +86,16 @@ export default function UsersPage() {
     setDialogOpen(false);
   };
 
+  const isPasswordValid = password && password.trim().length >= 6;
+  const isEmailValid = email && email.trim().length > 0;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isEmailValid || !isPasswordValid) return;
     try {
-      await addUser({ name, email, password });
+      await addUser({ email, password });
       setDialogOpen(false);
+      setSuccessOpen(true);
     } catch {
       // error is captured in addUserState.error; keep dialog open
     }
@@ -112,6 +120,30 @@ export default function UsersPage() {
   const handleClearSearch = () => {
     setSearchValue('');
     fetchUsers('');
+  };
+
+  const handleOpenDeleteConfirm = (user: any) => {
+    setUserToDelete({ id: user.id, email: user.email });
+    setDeleteConfirmDialogOpen(true);
+  };
+
+  const handleCloseDeleteConfirm = () => {
+    setDeleteConfirmDialogOpen(false);
+    setUserToDelete(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!userToDelete) return;
+    setIsDeleting(true);
+    try {
+      await removeUser(userToDelete.id);
+      setDeleteConfirmDialogOpen(false);
+      setUserToDelete(null);
+    } catch {
+      // error is handled; dialog stays open
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -220,7 +252,7 @@ export default function UsersPage() {
                         <IconButton
                           size="small"
                           color={isManager || user.role === 'admin' ? 'default' : 'error'}
-                          onClick={isManager || user.role === 'admin' ? undefined : () => removeUser(user.id)}
+                          onClick={isManager || user.role === 'admin' ? undefined : () => handleOpenDeleteConfirm(user)}
                           aria-label="delete user"
                           disabled={isManager || user.role === 'admin'}
                         >
@@ -251,6 +283,7 @@ export default function UsersPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               fullWidth
+              disabled={addUserState.isLoading}
             />
             <TextField
               label="Password"
@@ -259,16 +292,17 @@ export default function UsersPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               fullWidth
-              inputProps={{ minLength: 6 }}
-              helperText="Minimum 6 characters"
+              disabled={addUserState.isLoading}
+              error={password.length > 0 && password.length < 6}
+              helperText={password.length > 0 && password.length < 6 ? 'Password must be at least 6 characters' : 'Minimum 6 characters'}
             />
             {addUserState.error && (
               <Alert severity="error">{addUserState.error}</Alert>
             )}
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2 }}>
-            <Button onClick={handleCloseDialog}>Cancel</Button>
-            <Button type="submit" variant="contained" disabled={addUserState.isLoading}>
+            <Button onClick={handleCloseDialog} disabled={addUserState.isLoading}>Cancel</Button>
+            <Button type="submit" variant="contained" disabled={!isEmailValid || !isPasswordValid || addUserState.isLoading}>
               Submit
             </Button>
           </DialogActions>
@@ -299,6 +333,39 @@ export default function UsersPage() {
           </DialogActions>
         </Box>
       </Dialog>
+
+      {/* Delete User Confirmation Dialog */}
+      <Dialog open={deleteConfirmDialogOpen} onClose={handleCloseDeleteConfirm} maxWidth="xs" fullWidth>
+        <DialogTitle>Confirm Delete User</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ mt: 2 }}>
+            Are you sure you want to delete the user{' '}
+            <strong>{userToDelete?.email}</strong>? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={handleCloseDeleteConfirm} disabled={isDeleting}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirmDelete}
+            color="error"
+            variant="contained"
+            disabled={isDeleting}
+          >
+            {isDeleting ? 'Deleting...' : 'Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar
+        open={successOpen}
+        color="success"
+        message="User created successfully"
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        autoHideDuration={2000}
+        onClose={() => setSuccessOpen(false)}
+      />
     </Box>
   );
 }

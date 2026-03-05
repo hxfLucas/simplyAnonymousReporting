@@ -9,7 +9,7 @@ export type User = {
   role: UserRole;
   createdAt: string;
 };
-export type AddUserPayload = { email: string; name: string; password: string };
+export type AddUserPayload = { email: string;  password: string };
 export type PaginatedResponse<T> = { data: T[]; total: number; hasMore: boolean; };
 
 export async function listUsers(offset = 0, limit = 25, search?: string): Promise<PaginatedResponse<User>> {
