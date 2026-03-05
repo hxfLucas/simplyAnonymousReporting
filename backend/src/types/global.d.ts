@@ -7,7 +7,10 @@ declare global {
       MONGO_URI?: string;
       CORS_ALLOWED_ORIGINS?: string;
       EMAIL_ENABLED?: string;
-      JWT_SECRET?: string;
+      JWT_ACCESS_SECRET?: string;
+      JWT_REFRESH_SECRET?: string;
+      JWT_EXPIRATION?: string;
+      JWT_REFRESH_EXPIRATION?: string;
       // SMTP email sending
       ENABLE_SMTP_EMAILS?: string;
       SMTP_HOST?: string;

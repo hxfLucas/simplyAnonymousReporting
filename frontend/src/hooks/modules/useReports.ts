@@ -28,8 +28,17 @@ export const STATUS_COLORS: Record<ReportStatus, 'default' | 'info' | 'warning' 
   rejected: 'error',
 };
 
+interface ActionState {
+  isLoading: boolean;
+  error: string | null;
+}
+
+const initialActionState: ActionState = { isLoading: false, error: null };
+
 export function useReports() {
   const [state, setState] = useState<ReportsState>({ reports: [], total: 0, hasMore: false, isLoading: false, isLoadingMore: false, error: null });
+  const [removeReportState, setRemoveReportState] = useState<ActionState>(initialActionState);
+  const [changeStatusState, setChangeStatusState] = useState<ActionState>(initialActionState);
 
   const offsetRef = useRef(0);
   const hasMoreRef = useRef(false);
@@ -74,12 +83,14 @@ export function useReports() {
   }, []);
 
   const removeReport = useCallback(async (id: string) => {
+    setRemoveReportState({ isLoading: true, error: null });
     try {
       await deleteReport(id);
       setState((prev) => ({
         ...prev,
         reports: prev.reports.filter((r) => r.id !== id),
       }));
+      setRemoveReportState({ isLoading: false, error: null });
       // trigger notifications refresh so navbar badge updates immediately
       try {
         refreshNotifications();
@@ -88,17 +99,19 @@ export function useReports() {
       }
     } catch (err: any) {
       const message = err?.response?.data?.error ?? err?.message ?? 'Failed to delete report';
-      setState((prev) => ({ ...prev, error: message }));
+      setRemoveReportState({ isLoading: false, error: message });
     }
   }, []);
 
   const changeReportStatus = useCallback(async (id: string, status: ReportStatus) => {
+    setChangeStatusState({ isLoading: true, error: null });
     try {
       const updated = await updateReportStatus({ id, status });
       setState((prev) => ({
         ...prev,
         reports: prev.reports.map((r) => (r.id === id ? updated : r)),
       }));
+      setChangeStatusState({ isLoading: false, error: null });
       // refresh notifications so badge updates immediately after status change
       try {
         refreshNotifications();
@@ -107,9 +120,9 @@ export function useReports() {
       }
     } catch (err: any) {
       const message = err?.response?.data?.error ?? err?.message ?? 'Failed to update status';
-      setState((prev) => ({ ...prev, error: message }));
+      setChangeStatusState({ isLoading: false, error: message });
     }
   }, []);
 
-  return { ...state, fetchInitial, loadMore, removeReport, changeReportStatus, fetchReports: fetchInitial };
+  return { ...state, fetchInitial, loadMore, removeReport, removeReportState, changeReportStatus, changeStatusState, fetchReports: fetchInitial };
 }

@@ -17,6 +17,13 @@ interface MagicLinksState {
   error: string | null;
 }
 
+interface ActionState {
+  isLoading: boolean;
+  error: string | null;
+}
+
+const initialActionState: ActionState = { isLoading: false, error: null };
+
 export function useMagicLinks() {
   const [state, setState] = useState<MagicLinksState>({
     magicLinks: [],
@@ -26,6 +33,8 @@ export function useMagicLinks() {
     isLoadingMore: false,
     error: null,
   });
+  const [generateLinkState, setGenerateLinkState] = useState<ActionState>(initialActionState);
+  const [removeLinkState, setRemoveLinkState] = useState<ActionState>(initialActionState);
 
   const offsetRef = useRef(0);
   const hasMoreRef = useRef(false);
@@ -70,33 +79,34 @@ export function useMagicLinks() {
   }, []);
 
   const generateMagicLink = useCallback(async (alias?: string) => {
-    setState((prev) => ({ ...prev, isLoading: true, error: null }));
+    setGenerateLinkState({ isLoading: true, error: null });
     try {
       const created = await apiCreateMagicLink(alias);
-      setState((prev) => ({ ...prev, magicLinks: [...prev.magicLinks, created], isLoading: false }));
+      setState((prev) => ({ ...prev, magicLinks: [...prev.magicLinks, created] }));
+      setGenerateLinkState({ isLoading: false, error: null });
       return created;
     } catch (err: any) {
       const message = err?.response?.data?.error ?? err?.message ?? 'Failed to create magic link';
-      setState((prev) => ({ ...prev, isLoading: false, error: message }));
+      setGenerateLinkState({ isLoading: false, error: message });
       throw err;
     }
   }, []);
 
   const removeMagicLink = useCallback(async (id: string) => {
-    setState((prev) => ({ ...prev, isLoading: true, error: null }));
+    setRemoveLinkState({ isLoading: true, error: null });
     try {
       await apiDeleteMagicLink(id);
       setState((prev) => ({
         ...prev,
         magicLinks: prev.magicLinks.filter((ml) => ml.id !== id),
-        isLoading: false,
       }));
+      setRemoveLinkState({ isLoading: false, error: null });
     } catch (err: any) {
       const message = err?.response?.data?.error ?? err?.message ?? 'Failed to delete magic link';
-      setState((prev) => ({ ...prev, isLoading: false, error: message }));
+      setRemoveLinkState({ isLoading: false, error: message });
       throw err;
     }
   }, []);
 
-  return { ...state, fetchInitial, loadMore, generateMagicLink, removeMagicLink, fetchMagicLinks: fetchInitial };
+  return { ...state, fetchInitial, loadMore, generateMagicLink, generateLinkState, removeMagicLink, removeLinkState, fetchMagicLinks: fetchInitial };
 }

@@ -17,22 +17,10 @@ import { useAuthContext } from '../../../contexts/AuthContext';
 
 export default function SignInPage() {
   const { signIn, signInState } = useAuth();
-  const { setUser } = useAuthContext();
+  const { updateSession } = useAuthContext();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!getRefreshToken()) return;
-    checkSession()
-      .then((session) => {
-        if (session.valid) {
-          setUser(session.user);
-          navigate('/acp');
-        }
-      })
-      .catch(() => {
-        // ignore
-      });
-  }, [navigate, setUser]);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -40,6 +28,20 @@ export default function SignInPage() {
     e.preventDefault();
     signIn({ email, password });
   };
+
+  useEffect(() => {
+    if (!getRefreshToken()) return;
+      checkSession()
+        .then((session) => {
+          if (session.valid) {
+            updateSession(session);
+            navigate('/acp');
+          }
+        })
+        .catch(() => {
+          // ignore
+        });
+  }, [navigate, updateSession]);
 
   return (
     <Box
@@ -107,7 +109,7 @@ export default function SignInPage() {
       </Paper>
 
       <Typography variant="body2" mt={3}>
-        Don&apos;t have an account?{' '}
+        Don'&apos;'t have an account?{' '}
         <MuiLink component={RouterLink} to="/sign-up">
           Sign up
         </MuiLink>

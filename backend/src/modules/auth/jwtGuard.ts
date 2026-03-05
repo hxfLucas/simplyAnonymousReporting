@@ -16,9 +16,9 @@ export function jwtGuard(req: Request, res: Response, next: NextFunction): void 
     return;
   }
 
-  const secret = process.env.JWT_SECRET;
+  const secret = process.env.JWT_ACCESS_SECRET;
   if (!secret) {
-    res.status(500).json({ message: 'JWT_SECRET is not configured' });
+    res.status(500).json({ message: 'JWT_ACCESS_SECRET is not configured' });
     return;
   }
 

@@ -5,9 +5,9 @@ import { getAppDataSource } from '../../shared/database/data-source';
 import { getAuthenticatedUserData } from '../../shared/auth/authContext';
 import { User } from '../users/users.entity';
 import { Company } from '../companies/companies.entity';
-import { Report } from '../reports/reports.entity';
+import { getNewReportCount } from '../notifications/notifications.service';
 
-type HttpError = Error & { status: number };
+type HttpError = Error & { status: number; code: string };
 
 type RefreshTokenPayload = JwtPayload & {
   sub: string;
@@ -15,8 +15,8 @@ type RefreshTokenPayload = JwtPayload & {
   atHash: string;
 };
 
-function createHttpError(status: number, message: string): HttpError {
-  return Object.assign(new Error(message), { status });
+function createHttpError(status: number, message: string, code: string): HttpError {
+  return Object.assign(new Error(message), { status, code });
 }
 
 function md5Hash(value: string): string {
@@ -24,17 +24,17 @@ function md5Hash(value: string): string {
 }
 
 function getAccessSecret(): string {
-  if (!process.env.JWT_SECRET) {
-    throw createHttpError(500, 'JWT_SECRET is not configured');
+  if (!process.env.JWT_ACCESS_SECRET) {
+    throw createHttpError(500, 'JWT_ACCESS_SECRET is not configured', 'INTERNAL_ERROR');
   }
-  return process.env.JWT_SECRET;
+  return process.env.JWT_ACCESS_SECRET;
 }
 
 function getRefreshSecret(): string {
-  if (!process.env.JWT_SECRET) {
-    throw createHttpError(500, 'JWT_SECRET is not configured');
+  if (!process.env.JWT_REFRESH_SECRET) {
+    throw createHttpError(500, 'JWT_REFRESH_SECRET is not configured', 'INTERNAL_ERROR');
   }
-  return process.env.JWT_SECRET;
+  return process.env.JWT_REFRESH_SECRET;
 }
 
 function hashPassword(password: string): Promise<string> {
@@ -83,19 +83,19 @@ function generateTokenPair(userId: string, role: string, companyId:string): { ac
   const accessSecret = getAccessSecret();
   const refreshSecret = getRefreshSecret();
   if(!userId){
-    throw createHttpError(500, 'User ID is missing');
+    throw createHttpError(500, 'User ID is missing', 'INTERNAL_ERROR');
   }
   if(!role){
-    throw createHttpError(500, 'User role is missing');
+    throw createHttpError(500, 'User role is missing', 'INTERNAL_ERROR');
   }
 
   const expirationSecondsAt = process.env.JWT_EXPIRATION ? parseInt(process.env.JWT_EXPIRATION) : 15 * 60;
   const expirationSecondsRt = process.env.JWT_REFRESH_EXPIRATION ? parseInt(process.env.JWT_REFRESH_EXPIRATION) : 7 * 24 * 60 * 60;
   if(!expirationSecondsAt) {
-    throw createHttpError(500, 'JWT_EXPIRATION is not configured');
+    throw createHttpError(500, 'JWT_EXPIRATION is not configured', 'INTERNAL_ERROR');
   }
   if(!expirationSecondsRt) {
-    throw createHttpError(500, 'JWT_REFRESH_EXPIRATION is not configured');
+    throw createHttpError(500, 'JWT_REFRESH_EXPIRATION is not configured', 'INTERNAL_ERROR');
   }
   const access_token = jwt.sign(
     { sub: userId, role:role, companyId:companyId },
@@ -117,7 +117,7 @@ function generateTokenPair(userId: string, role: string, companyId:string): { ac
 function setAccessTokenCookie(res: Response, accessToken: string): void {
   const expirationSecondsAt = process.env.JWT_EXPIRATION ? parseInt(process.env.JWT_EXPIRATION) : 0;
   if(!expirationSecondsAt){
-    throw createHttpError(500, 'JWT_EXPIRATION is not configured');
+    throw createHttpError(500, 'JWT_EXPIRATION is not configured', 'INTERNAL_ERROR');
   }
   res.cookie('access_token', accessToken, {
     httpOnly: true,
@@ -131,13 +131,13 @@ export async function signUp(req: Request, res: Response): Promise<void> {
   const { email: rawEmail, password, company } = req.body ?? {};
   const email = String(rawEmail ?? '').trim().toLowerCase();
   if (!email || !password) {
-    throw createHttpError(400, 'email and password are required');
+    throw createHttpError(400, 'email and password are required', 'BAD_REQUEST');
   }
 
   const repository = getAppDataSource().getRepository(User);
   const existingUser = await repository.findOneBy({ email });
   if (existingUser) {
-    throw createHttpError(409, 'email already registered');
+    throw createHttpError(409, 'email already registered', 'DUPLICATE_EMAIL');
   }
 
   const repositoryCompany = getAppDataSource().getRepository(Company);
@@ -159,18 +159,18 @@ export async function signIn(req: Request, res: Response): Promise<void> {
   const { email: rawEmail, password } = req.body ?? {};
   const email = String(rawEmail ?? '').trim().toLowerCase();
   if (!email || !password) {
-    throw createHttpError(400, 'email and password are required');
+    throw createHttpError(400, 'email and password are required', 'BAD_REQUEST');
   }
 
   const repository = getAppDataSource().getRepository(User);
   const user = await repository.findOneBy({ email });
   if (!user) {
-    throw createHttpError(401, 'invalid credentials');
+    throw createHttpError(401, 'invalid credentials', 'UNAUTHORIZED');
   }
 
   const isValidPassword = await verifyPassword(password, user.passwordHash);
   if (!isValidPassword) {
-    throw createHttpError(401, 'invalid credentials');
+    throw createHttpError(401, 'invalid credentials', 'UNAUTHORIZED');
   }
 
   const { access_token, refresh_token } = generateTokenPair(user.id, user.role, user.companyId);
@@ -181,41 +181,50 @@ export async function signIn(req: Request, res: Response): Promise<void> {
 export async function refreshTokens(req: Request, res: Response): Promise<void> {
   const { refresh_token } = req.body ?? {};
   if (!refresh_token) {
-    throw createHttpError(400, 'refresh_token is required');
+    throw createHttpError(400, 'refresh_token is required', 'BAD_REQUEST');
   }
 
   const accessToken = req.cookies?.access_token as string | undefined;
   if (!accessToken) {
-    throw createHttpError(401, 'access_token cookie is required');
+    throw createHttpError(401, 'access_token cookie is required', 'UNAUTHORIZED');
   }
 
   let payload: RefreshTokenPayload;
   try {
     payload = jwt.verify(refresh_token, getRefreshSecret(), { algorithms: ['HS256'] }) as RefreshTokenPayload;
   } catch {
-    throw createHttpError(401, 'invalid or expired refresh_token');
+    throw createHttpError(401, 'invalid or expired refresh_token', 'UNAUTHORIZED');
   }
 
   const accessTokenHash = md5Hash(accessToken);
   if (accessTokenHash !== payload.atHash) {
-    throw createHttpError(401, 'token pair mismatch');
+    throw createHttpError(401, 'token pair mismatch', 'UNAUTHORIZED');
   }
 
-  const { access_token, refresh_token: newRefreshToken } = generateTokenPair(payload.sub, payload.role, payload.companyId);
+  const userRepository = getAppDataSource().getRepository(User);
+  const tokenUser = await userRepository.findOneBy({ id: payload.sub });
+  if (!tokenUser) {
+    throw createHttpError(401, 'user not found', 'UNAUTHORIZED');
+  }
+
+  const { access_token, refresh_token: newRefreshToken } = generateTokenPair(tokenUser.id, tokenUser.role, tokenUser.companyId);
   setAccessTokenCookie(res, access_token);
   res.status(200).json({ refresh_token: newRefreshToken });
 }
 
 export async function checkSession(req: Request, res: Response): Promise<void> {
-  const payload = req.user as JwtPayload | undefined;
-  if (!payload?.sub) {
-    throw createHttpError(401, 'unauthorized');
+  const authData = getAuthenticatedUserData();
+
+  const sessionUserRepository = getAppDataSource().getRepository(User);
+  const sessionUser = await sessionUserRepository.findOneBy({ id: authData.id });
+  if (!sessionUser) {
+    throw createHttpError(401, 'user not found', 'UNAUTHORIZED');
   }
 
   const { access_token, refresh_token } = generateTokenPair(
-    payload.sub,
-    payload.role,
-    payload.companyId
+    authData.id,
+    authData.role,
+    authData.companyId
   );
   setAccessTokenCookie(res, access_token);
 
@@ -227,16 +236,25 @@ export async function checkSession(req: Request, res: Response): Promise<void> {
     refresh_token,
     expiresAt,
     user: {
-      id: payload.sub,
-      email: payload.email,
-      role: payload.role,
-      companyId: payload.companyId,
+      id: authData.id,
+      email: sessionUser.email,
+      role: authData.role,
+      companyId: authData.companyId,
     },
   });
 }
 
 export async function getNotifications(req: Request, res: Response, next: NextFunction): Promise<void> {
   const { companyId } = getAuthenticatedUserData();
-  const count = await getAppDataSource().getRepository(Report).count({ where: { companyId, status: 'new' } });
+  const count = await getNewReportCount(companyId);
   res.status(200).json({ reportNotificationsData: { totalNew: count } });
+}
+
+export function signOut(req: Request, res: Response): void {
+  res.clearCookie('access_token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+  });
+  res.status(204).send();
 }

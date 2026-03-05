@@ -1,12 +1,11 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { checkSession } from '../api/auth.api';
+import { checkSession, signOut as apiSignOut } from '../api/auth.api';
 import type { SessionUser, SessionResponse } from '../api/auth.api';
 import { clearRefreshToken, getRefreshToken, setRefreshToken } from '../api/axios';
 
 interface AuthContextValue {
   user: SessionUser | null;
   isLoading: boolean;
-  setUser: (user: SessionUser | null) => void;
   updateSession: (session: SessionResponse) => void;
   signOut: () => void;
 }
@@ -19,6 +18,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [expiresAt, setExpiresAt] = useState<number | null>(null);
 
   const signOut = useCallback(() => {
+    apiSignOut().catch(() => {});
     clearRefreshToken();
     setUser(null);
     setExpiresAt(null);
@@ -69,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [expiresAt, user, signOut, updateSession]);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, setUser, updateSession, signOut }}>
+    <AuthContext.Provider value={{ user, isLoading, updateSession, signOut }}>
       {children}
     </AuthContext.Provider>
   );

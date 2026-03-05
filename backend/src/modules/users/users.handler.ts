@@ -35,7 +35,7 @@ export async function removeUser(req: Request<{ id: string }>, res: Response) {
 
   const companyId = getAuthenticatedUserData().companyId;
   await deleteUserFromCompany(id,companyId);
-  return res.status(200).json({ message: 'User removed' });
+  return res.status(204).send();
 }
 
 export async function usersList(req: Request, res: Response) {

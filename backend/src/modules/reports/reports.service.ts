@@ -17,6 +17,7 @@ export async function validateReportToken(
   if (!link) {
     const err: any = new Error('Invalid or expired reporting token');
     err.status = 404;
+    err.code = 'NOT_FOUND';
     throw err;
   }
 
@@ -33,6 +34,7 @@ export async function submitReport(payload: {
   if (!payload.title || typeof payload.title !== 'string' || payload.title.trim() === '') {
     const err: any = new Error('Title is required');
     err.status = 400;
+    err.code = 'VALIDATION_ERROR';
     throw err;
   }
 
@@ -43,6 +45,7 @@ export async function submitReport(payload: {
   ) {
     const err: any = new Error('Description is required');
     err.status = 400;
+    err.code = 'VALIDATION_ERROR';
     throw err;
   }
 
@@ -67,6 +70,7 @@ export async function listReports(offset: number = 0, limit: number = 25): Promi
   if (!authData.companyId) {
     const err: any = new Error('Unauthorized');
     err.status = 401;
+    err.code = 'UNAUTHORIZED';
     throw err;
   }
 
@@ -89,6 +93,7 @@ export async function deleteReport(id: string): Promise<void> {
   if (!report) {
     const err: any = new Error('Report not found');
     err.status = 404;
+    err.code = 'NOT_FOUND';
     throw err;
   }
 
@@ -106,6 +111,7 @@ export async function updateReportStatus(payload: {
   if (!report) {
     const err: any = new Error('Report not found');
     err.status = 404;
+    err.code = 'NOT_FOUND';
     throw err;
   }
 

@@ -1,4 +1,3 @@
-import { AuthenticatedUser } from './../../shared/auth/authContext';
 import crypto from 'crypto';
 import  {getAppDataSource}  from '../../shared/database/data-source';
 import { User } from './users.entity';
@@ -9,8 +8,9 @@ export type AdminContext = { id: string; role: string; companyId?: string };
 export async function createUserForCompany(
   payload: { email: string; password: string }
 ): Promise<User> {
+  const authData = getAuthenticatedUserData();
 
-  if (getAuthenticatedUserData().role !== 'admin') {
+  if (authData.role !== 'admin') {
     const err: any = new Error('Forbidden');
     err.code = 'FORBIDDEN';
     err.status = 403;
@@ -18,7 +18,7 @@ export async function createUserForCompany(
   }
 
   const repo = getAppDataSource().getRepository(User);
-  const existing = await repo.findOneBy({ email: payload.email, companyId: getAuthenticatedUserData().companyId });
+  const existing = await repo.findOneBy({ email: payload.email, companyId: authData.companyId });
   if (existing) {
     const err: any = new Error('Email already in use');
     err.code = 'DUPLICATE_EMAIL';
@@ -35,7 +35,7 @@ export async function createUserForCompany(
     });
   });
 
-  const companyId = getAuthenticatedUserData().companyId;
+  const companyId = authData.companyId;
   const user = repo.create({
     company:{ id: companyId },
     email: payload.email,

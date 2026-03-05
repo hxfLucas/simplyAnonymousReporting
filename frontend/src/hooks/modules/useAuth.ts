@@ -27,8 +27,6 @@ export function useAuth() {
     } catch (err: any) {
       const message = err?.response?.data?.error ?? err?.message ?? 'Sign in failed';
       setSignInState({ isLoading: false, error: message });
-    } finally {
-      setSignInState((prev) => ({ ...prev, isLoading: false }));
     }
   }, [navigate, updateSession]);
 
@@ -43,8 +41,6 @@ export function useAuth() {
     } catch (err: any) {
       const message = err?.response?.data?.error ?? err?.message ?? 'Sign up failed';
       setSignUpState({ isLoading: false, error: message });
-    } finally {
-      setSignUpState((prev) => ({ ...prev, isLoading: false }));
     }
   }, [navigate, updateSession]);
 

@@ -30,7 +30,7 @@ export async function deleteReportHandler(req: Request<{ id: string }>, res: Res
   if (!id) return res.status(400).json({ error: 'Missing report id' });
 
   await deleteReport(id);
-  return res.status(200).json({ message: 'Report deleted' });
+  return res.status(204).send();
 }
 
 export async function updateReportStatusHandler(req: Request, res: Response) {

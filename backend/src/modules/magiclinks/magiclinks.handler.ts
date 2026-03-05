@@ -1,8 +1,6 @@
 import { Request, Response } from 'express'
 import { getAuthenticatedUserData } from '../../shared/auth/authContext'
 import { listByCompany, createMagicLink, deleteById } from './magiclinks.service'
-import { MagicLink } from './magiclinks.entity';
-import { getAppDataSource } from '../../shared/database/data-source';
 
 
 export async function listMagicLinks(req: Request, res: Response): Promise<void> {
@@ -25,13 +23,7 @@ export async function createNewMagicLink(req: Request, res: Response): Promise<v
   }
   const { alias } = req.body as { alias?: string }
   const created = await createMagicLink(companyId, alias, createdById);
-  const repo = getAppDataSource().getRepository(MagicLink)
-  const withRelation = await repo.findOne({ where: { id: created.id }, relations: ['createdBy'] })
-  if(!withRelation){
-    res.status(500).json({ error: 'Failed to retrieve created magic link' })
-    return
-  }
-  res.status(201).json({ id: created.id, reportingToken: created.reportingToken, alias: created.alias, createdById: created.createdById, createdAt: created.createdAt, createdBy: {...withRelation.createdBy } })
+  res.status(201).json({ id: created.id, reportingToken: created.reportingToken, alias: created.alias, createdById: created.createdById, createdAt: created.createdAt, createdBy: { ...created.createdBy } })
 }
 
 export async function deleteMagicLink(req: Request, res: Response): Promise<void> {

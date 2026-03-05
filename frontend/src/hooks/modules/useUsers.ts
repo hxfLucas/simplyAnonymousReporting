@@ -18,8 +18,18 @@ interface UsersState {
   error: string | null;
 }
 
+interface ActionState {
+  isLoading: boolean;
+  error: string | null;
+}
+
+const initialActionState: ActionState = { isLoading: false, error: null };
+
 export function useUsers() {
   const [state, setState] = useState<UsersState>({ users: [], total: 0, hasMore: false, isLoading: false, isLoadingMore: false, error: null });
+  const [addUserState, setAddUserState] = useState<ActionState>(initialActionState);
+  const [removeUserState, setRemoveUserState] = useState<ActionState>(initialActionState);
+  const [updatePasswordState, setUpdatePasswordState] = useState<ActionState>(initialActionState);
 
   const offsetRef = useRef(0);
   const hasMoreRef = useRef(false);
@@ -64,45 +74,46 @@ export function useUsers() {
   }, []);
 
   const addUser = useCallback(async (payload: AddUserPayload) => {
-    setState((prev) => ({ ...prev, isLoading: true, error: null }));
+    setAddUserState({ isLoading: true, error: null });
     try {
       const created = await apiAddUser(payload);
-      setState((prev) => ({ ...prev, users: [...prev.users, created], isLoading: false }));
+      setState((prev) => ({ ...prev, users: [...prev.users, created] }));
+      setAddUserState({ isLoading: false, error: null });
       return created;
     } catch (err: any) {
       const message = err?.response?.data?.error ?? err?.message ?? 'Failed to add user';
-      setState((prev) => ({ ...prev, isLoading: false, error: message }));
+      setAddUserState({ isLoading: false, error: message });
       throw err;
     }
   }, []);
 
   const removeUser = useCallback(async (id: string) => {
-    setState((prev) => ({ ...prev, isLoading: true, error: null }));
+    setRemoveUserState({ isLoading: true, error: null });
     try {
       await apiRemoveUser(id);
       setState((prev) => ({
         ...prev,
         users: prev.users.filter((u) => u.id !== id),
-        isLoading: false,
       }));
+      setRemoveUserState({ isLoading: false, error: null });
     } catch (err: any) {
       const message = err?.response?.data?.error ?? err?.message ?? 'Failed to remove user';
-      setState((prev) => ({ ...prev, isLoading: false, error: message }));
+      setRemoveUserState({ isLoading: false, error: message });
       throw err;
     }
   }, []);
 
   const updateUserPassword = useCallback(async (id: string, password: string) => {
-    setState((prev) => ({ ...prev, isLoading: true, error: null }));
+    setUpdatePasswordState({ isLoading: true, error: null });
     try {
       await apiUpdateUserPassword(id, password);
-      setState((prev) => ({ ...prev, isLoading: false }));
+      setUpdatePasswordState({ isLoading: false, error: null });
     } catch (err: any) {
       const message = err?.response?.data?.error ?? err?.message ?? 'Failed to update password';
-      setState((prev) => ({ ...prev, isLoading: false, error: message }));
+      setUpdatePasswordState({ isLoading: false, error: message });
       throw err;
     }
   }, []);
 
-  return { ...state, fetchInitial, loadMore, addUser, removeUser, updateUserPassword, fetchUsers: fetchInitial };
+  return { ...state, fetchInitial, loadMore, addUser, addUserState, removeUser, removeUserState, updateUserPassword, updatePasswordState, fetchUsers: fetchInitial };
 }

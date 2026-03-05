@@ -26,7 +26,8 @@ export async function createMagicLink(companyId: string, alias?: string | null, 
   } as Partial<MagicLink>)
 
   const saved = await repo.save(entity)
-  return saved
+  const withRelation = await repo.findOne({ where: { id: saved.id }, relations: ['createdBy'] })
+  return withRelation ?? saved
 }
 
 export async function deleteById(id: string, companyId: string, userId: string, role: string): Promise<void> {

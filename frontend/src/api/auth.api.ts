@@ -30,3 +30,7 @@ export async function getNotifications(): Promise<{ reportNotificationsData: { t
   const { data } = await api.get<{ reportNotificationsData: { totalNew: number } }>('/auth/notifications');
   return data;
 }
+
+export async function signOut(): Promise<void> {
+  await api.post('/auth/sign-out');
+}
