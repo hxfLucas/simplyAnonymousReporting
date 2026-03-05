@@ -309,7 +309,7 @@ Rename `.envExample` to `.env` and configure it:
 
 ```env
 # Environment
-NODE_ENV=DEV
+NODE_ENV=dev
 SHOW_UNHANDLED_ERRORS_IN_CONSOLE=false
 
 # CORS
@@ -347,7 +347,7 @@ SMTP_FROM=noreply@yourapp.com
 
 | Variable | Default | Description |
 |---|---|---|
-| `NODE_ENV` | `DEV` | `DEV` or `LIVE` — controls cookie `secure` flag and error verbosity |
+| `NODE_ENV` | `dev` | `production` or `production` — controls cookie `secure` flag and error verbosity |
 | `POSTGRES_HOST` | `localhost` | PostgreSQL hostname |
 | `POSTGRES_PORT` | `5432` | PostgreSQL port |
 | `POSTGRES_USER` | — | PostgreSQL username |
@@ -399,7 +399,7 @@ VITE_PROACTIVE_REFRESH_TOKENS_BEFORE_EXPIRATION_MINUTES=10
 | Variable | Default | Description |
 |---|---|---|
 | `VITE_BASE_LINK` | `http://localhost:5173` | Base URL for the frontend application |
-| `VITE_PROACTIVE_REFRESH_TOKENS_BEFORE_EXPIRATION_MINUTES` | `10` | Minutes before token expiry to proactively refresh the session |
+| `VITE_PROACTIVE_REFRESH_TOKENS_BEFORE_EXPIRATION_MINUTES` | `10` | Minutes before token expiry to proactively refresh the session (also refreshes automatically on token expiration but this avoids unexpected retries |
 
 ### 6. Start the Frontend
 
