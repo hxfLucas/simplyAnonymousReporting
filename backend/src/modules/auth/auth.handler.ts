@@ -8,6 +8,7 @@ import { getAuthenticatedUserData } from '../../shared/auth/authContext';
 import { User } from '../users/users.entity';
 import { Company } from '../companies/companies.entity';
 import { getNewReportCount } from '../notifications/notifications.service';
+import { isTokenInvalidated } from '../../shared/auth/tokenInvalidation';
 import { SignUpDto, SignInDto, RefreshTokensDto, AuthTokenResponseDto, CheckSessionResponseDto } from './auth.dtos';
 import { NotificationsResponseDto } from '../notifications/notifications.dtos';
 import { ErrorResponseDto } from '../../shared/errors/errorResponse.dto';
@@ -162,6 +163,10 @@ export async function refreshTokens(req: Request<{}, AuthTokenResponseDto, Refre
   const accessTokenHash = md5Hash(accessToken);
   if (accessTokenHash !== payload.atHash) {
     throw createHttpError(401, 'token pair mismatch', 'UNAUTHORIZED');
+  }
+
+  if (isTokenInvalidated(payload.sub, payload.iat ?? 0)) {
+    throw createHttpError(401, 'token has been invalidated', 'UNAUTHORIZED');
   }
 
   const userRepository = getAppDataSource().getRepository(User);

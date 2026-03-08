@@ -68,6 +68,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => clearTimeout(timeoutId);
   }, [expiresAt, user, signOut, updateSession]);
 
+  useEffect(() => {
+    const handler = () => {
+      signOut();
+    };
+    window.addEventListener('auth:session-expired', handler);
+    return () => window.removeEventListener('auth:session-expired', handler);
+  }, [signOut]);
+
   return (
     <AuthContext.Provider value={{ user, isLoading, updateSession, signOut }}>
       {children}

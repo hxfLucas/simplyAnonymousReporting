@@ -45,6 +45,7 @@ api.interceptors.response.use(
         return api(originalConfig);
       } catch (refreshError) {
         clearRefreshToken();
+        window.dispatchEvent(new CustomEvent('auth:session-expired'));
         return Promise.reject(refreshError);
       }
     }
