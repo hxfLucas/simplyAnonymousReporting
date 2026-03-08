@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { hashPassword, verifyPassword } from '../../shared/utils/passwordUtils';
 import { getAppDataSource } from '../../shared/database/data-source';
+import { getTransactionalEntityManager } from '../../shared/database/transactionContext';
 import { getAuthenticatedUserData } from '../../shared/auth/authContext';
 import { User } from '../users/users.entity';
 import { Company } from '../companies/companies.entity';
@@ -96,16 +97,16 @@ export async function signUp(req: Request<{}, {}, SignUpDto>, res: Response<Auth
     throw createHttpError(400, 'email and password are required', 'BAD_REQUEST');
   }
 
-  const repository = getAppDataSource().getRepository(User);
+  const em = getTransactionalEntityManager();
+  const repository = em.getRepository(User);
   const existingUser = await repository.findOneBy({ email });
   if (existingUser) {
     throw createHttpError(409, 'email already registered', 'DUPLICATE_EMAIL');
   }
 
-  const repositoryCompany = getAppDataSource().getRepository(Company);
+  const repositoryCompany = em.getRepository(Company);
   const newCompany = repositoryCompany.create({ name: company });
   const savedCompany = await repositoryCompany.save(newCompany);
-
   const companyId = savedCompany.id;
   const passwordHash = await hashPassword(password);
   const roleToAssign = "admin";

@@ -10,6 +10,7 @@ import reportsRouter from './modules/reports/reports.routes';
 import dashboardRouter from './modules/dashboard/dashboard.routes';
 
 import { requestContextMiddleware } from './shared/auth/requestContext';
+import { withTransaction } from './shared/middleware/withTransaction';
 
 export async function createApp(dataSource?: any){
         const app = express();
@@ -19,6 +20,7 @@ export async function createApp(dataSource?: any){
         app.use(createCorsMiddleware());
 
         app.use(requestContextMiddleware);
+        //app.use(withTransaction);
         // if a test datasource is provided, install it as the app singleton
         if (dataSource) {
           setAppDataSource(dataSource);
