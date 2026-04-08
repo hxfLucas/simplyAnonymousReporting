@@ -146,7 +146,7 @@ graph TB
 ### Monorepo Structure
 
 ```
-bridgeInChallenge/
+root/
 ├── backend/          # Express 5 + TypeScript + TypeORM + PostgreSQL
 ├── frontend/         # React 19 + Vite + MUI + React Router 7
 └── readme.md
