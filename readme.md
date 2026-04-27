@@ -1,4 +1,4 @@
-Anonymous Reporting Platform
+Anonymous Reporting Platform (main purpose of this project was testing the lightweight orchestration agents, posted Holland Burke at https://gist.github.com/burkeholland/0e68481f96e94bbb98134fa6efd00436 )
 
 > **Simple Anonymous Reporting Platform** — A full-stack anonymous reporting platform where companies can generate unique magic links that allow employees to anonymously submit reports (concerns, feedback, issues) directly to management.
 
